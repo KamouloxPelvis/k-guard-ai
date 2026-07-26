@@ -46,7 +46,7 @@ Planned processing flow:
 - Wazuh
 - Elasticsearch
 - Kibana
-- Ollama or vLLM (future release)
+- Ollama
 
 ## API
 
