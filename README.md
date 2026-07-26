@@ -32,7 +32,7 @@ Planned processing flow:
 ## Tech Stack
 
 ### Backend
-- Java 21
+- Java 25
 - Spring Boot 3
 - Spring Web
 - Spring Validation
@@ -107,7 +107,7 @@ Example:
 ## Local development
 
 ### Prerequisites
-- Java 21
+- Java 25
 - Maven Wrapper
 
 ### Build and test
