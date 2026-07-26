@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-07-26
+
+### Added
+- Added correlation IDs to alert analysis responses.
+- Added confidence scoring for alert classification.
+- Added a response structure ready for future local LLM integration.
+- Added clearer incident classification categories for security event enrichment.
+
+### Changed
+- Improved the alert analysis service to generate more traceable and structured output.
+- Refined the response payload to support future LLMOps processing and downstream observability.
+- Kept the current pipeline fully local, with sanitized input and human-readable French output.
+
+### Security
+- Preserved log sanitization before any future model handoff.
+- Continued to avoid exposing secrets, tokens, or credentials in analysis output.
+
+### Validation
+- Verified local Spring Boot startup on port 8080.
+- Verified valid alert analysis requests return correlation IDs, sanitized logs, and confidence scores.
+- Verified invalid requests still return structured validation errors.
+
 ## [0.2.0] - 2026-07-26
 
 ### Added
