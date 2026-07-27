@@ -1,8 +1,9 @@
 package org.devopsnotes.kguard.ai.dto;
 
+import java.time.Instant;
 import java.util.List;
 
-public record AlertAnalysisResponse(
+public record AlertAnalysisDocument(
         String correlationId,
         String source,
         String severity,
@@ -12,6 +13,7 @@ public record AlertAnalysisResponse(
         String sanitizedLog,
         Double confidenceScore,
         List<String> recommendedActions,
-        LlmEnrichment llmEnrichment
+        LlmEnrichment llmEnrichment,
+        Instant exportedAt
 ) {
 }
