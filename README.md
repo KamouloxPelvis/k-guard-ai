@@ -1,28 +1,30 @@
 # K-Guard AI
 
-Current release: v0.4.0
+Current release: v0.5.0
 
-K-Guard AI is an independent Java microservice that transforms raw security alerts into structured, human-readable incident analysis for K-Guard.
-It is designed to support DevSecOps, SOC, and platform operations with deterministic alert triage and optional local LLM enrichment.
+K-Guard AI is a Java 21 and Spring Boot microservice that transforms raw security alerts into structured, human-readable incident analysis for K-Guard and similar security workflows.
+It is designed as a portable backend component for DevSecOps, SOC, and platform operations, with deterministic triage, optional local LLM enrichment through Ollama, optional Elasticsearch export, and Kubernetes-ready deployment assets.
 
 ## Disclaimer
 
 K-Guard AI is a personal and experimental MVP built for portfolio, research, and learning purposes.
-It is not a production-ready SOC platform and must be reviewed, tested, and hardened before use in sensitive environments.
+It is not a production-ready SOC platform and must be reviewed, tested, hardened, and validated before use in sensitive or regulated environments.
 
 ## Overview
 
-K-Guard AI acts as an analysis layer between security event sources and downstream remediation, dashboarding, or AI-assisted workflows.
+K-Guard AI acts as an analysis layer between security event producers and downstream consumers such as dashboards, enrichment pipelines, or incident-response workflows.
 
 Current capabilities:
 - Accept raw alerts through a REST API.
-- Validate required input fields.
+- Validate required input fields and return structured HTTP 400 responses.
 - Sanitize common sensitive values before processing.
 - Classify the incident into an initial security category.
 - Generate a deterministic English summary.
 - Estimate risk level and confidence score.
 - Return recommended investigation and remediation actions.
 - Optionally enrich the response with a local LLM through Ollama.
+- Optionally export analyzed alerts to Elasticsearch.
+- Provide container packaging and portable Kubernetes manifests for deployment.
 
 ## Architecture
 
@@ -30,11 +32,34 @@ Current processing flow:
 1. K-Guard or another security source sends a raw alert to K-Guard AI.
 2. K-Guard AI validates and sanitizes the payload.
 3. K-Guard AI classifies the incident and generates a deterministic summary.
-4. K-Guard AI optionally sends the sanitized context to a local Ollama model.
-5. The API returns a structured response with deterministic analysis and optional LLM enrichment.
-6. Future releases may export enriched output to Elasticsearch and Kubernetes-native consumers.
+4. K-Guard AI optionally forwards sanitized context to a configured LLM provider.
+5. K-Guard AI optionally exports the analyzed alert to Elasticsearch.
+6. The API returns a structured response containing deterministic analysis and optional LLM enrichment.
 
-## Tech Stack
+## Implemented components
+
+### Analysis pipeline
+- Request validation.
+- Sensitive-value sanitization.
+- Incident classification.
+- Risk scoring.
+- Confidence scoring.
+- Deterministic summary generation.
+- Recommended action generation.
+
+### LLM integration
+- Provider abstraction layer.
+- Ollama provider implementation.
+- Local model support for lightweight enrichment workflows.
+
+### Delivery and deployment
+- Docker image build support.
+- GitHub Actions workflow for GHCR publishing.
+- Kubernetes manifests in `k8s/`.
+- ConfigMap-based runtime configuration.
+- Portable secret placeholder for optional sensitive settings.
+
+## Tech stack
 
 ### Backend
 - Java 21
@@ -47,7 +72,7 @@ Current processing flow:
 
 ### Local AI
 - Ollama
-- Qwen3 (`qwen3:0.6b`) for the current local MVP path
+- Qwen3 (`qwen3:0.6b`) for the current lightweight local MVP path
 
 ### Target ecosystem
 - Kubernetes
@@ -130,7 +155,7 @@ Example:
 
 ## Health endpoint
 
-K-Guard AI exposes a basic Spring Boot Actuator health endpoint:
+K-Guard AI exposes a Spring Boot Actuator health endpoint:
 
 ```bash
 curl -s http://localhost:8080/actuator/health | jq
@@ -146,6 +171,8 @@ Expected response:
 
 ## Configuration
 
+### Application properties
+
 Example `application.yml` snippet:
 
 ```yaml
@@ -157,15 +184,30 @@ kguard:
       base-url: http://localhost:11434
       model: qwen3:0.6b
       timeout-seconds: 30
+
+    elasticsearch:
+      export-enabled: false
+      url: http://localhost:9200
+      index: kguard-ai-alerts
 ```
 
-## Security notes
+### Environment variables
 
-- Sensitive values must never be committed to Git.
-- Sanitization is applied before returning analysis output.
-- LLM enrichment uses sanitized alert content only.
-- The current MVP uses local inference to avoid sending alert data to third-party AI services.
-- Future releases should add stronger prompt-injection defenses, allowlists, output validation, and traceability.
+The service can be configured through environment variables, especially for container and Kubernetes deployments:
+
+```bash
+export SERVER_PORT=8080
+export KGUARD_AI_LLM_ENABLED=true
+export KGUARD_AI_LLM_PROVIDER=ollama
+export KGUARD_AI_LLM_BASE_URL=http://localhost:11434
+export KGUARD_AI_LLM_MODEL=qwen3:0.6b
+export KGUARD_AI_LLM_TIMEOUT_SECONDS=30
+export KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED=false
+export KGUARD_AI_ELASTICSEARCH_URL=http://localhost:9200
+export KGUARD_AI_ELASTICSEARCH_INDEX=kguard-ai-alerts
+```
+
+If Elasticsearch export is disabled, Elasticsearch credentials are not required.
 
 ## Local development
 
@@ -204,10 +246,82 @@ curl -s http://localhost:8080/api/v1/alerts/analyze \
   }' | jq
 ```
 
+## Container packaging
+
+The repository includes a production-oriented `Dockerfile` and `.dockerignore`.
+
+### Build image locally
+
+```bash
+docker build -t kguard-ai:local .
+```
+
+### Run image locally
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e KGUARD_AI_LLM_ENABLED=true \
+  -e KGUARD_AI_LLM_PROVIDER=ollama \
+  -e KGUARD_AI_LLM_BASE_URL=http://host.docker.internal:11434 \
+  -e KGUARD_AI_LLM_MODEL=qwen3:0.6b \
+  -e KGUARD_AI_LLM_TIMEOUT_SECONDS=30 \
+  -e KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED=false \
+  kguard-ai:local
+```
+
+## GitHub Actions and GHCR
+
+The repository includes a GitHub Actions workflow at `.github/workflows/docker-publish.yml`.
+
+Current behavior:
+- Builds the application image on supported branch pushes and manual dispatch.
+- Publishes the image to GitHub Container Registry.
+- Publishes `latest`.
+- Publishes Git SHA tags for immutable Kubernetes deployments.
+
+For Kubernetes, prefer the immutable SHA tag instead of `latest`.
+
+## Kubernetes deployment
+
+Portable manifests are available in `k8s/`:
+- `k8s/configmap.yaml`
+- `k8s/deployment.yaml`
+- `k8s/service.yaml`
+- `k8s/secret.example.yaml`
+- `k8s/README.md`
+
+### Apply manifests
+
+```bash
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl rollout status deployment/kguard-ai -n k-guard --timeout=180s
+```
+
+### Important deployment notes
+
+- Replace `ghcr.io/kamouloxpelvis/k-guard-ai:latest` with an immutable image tag before production deployment.
+- Do not apply `k8s/secret.example.yaml` as-is in production.
+- Create environment-specific Kubernetes Secrets outside Git when enabling sensitive integrations.
+- If Elasticsearch export remains disabled, Elasticsearch credentials are not required.
+- Review resource requests, limits, probes, and namespace assumptions before production use.
+
+## Security notes
+
+- Sensitive values must never be committed to Git.
+- Sanitization is applied before returning analysis output.
+- LLM enrichment uses sanitized alert content only.
+- The current MVP uses local inference to avoid sending alert data to third-party AI services.
+- Portable manifests intentionally avoid embedding real secrets.
+- Future releases should add stronger prompt-injection defenses, provider policy controls, output validation, and richer auditability.
+
+See also: [SECURITY.md](SECURITY.md)
+
 ## Roadmap
 
 - v0.4.0: local LLM integration with Ollama
-- v0.5.0: provider abstraction, vLLM support, Elasticsearch export, and Kubernetes deployment assets
+- v0.5.0: provider abstraction, optional Elasticsearch export, Docker packaging, GHCR publishing, and portable Kubernetes deployment assets
 - v0.6.0: LLM guardrails, output policy validation, and stronger observability
 
 ## License
