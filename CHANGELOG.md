@@ -8,6 +8,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+<<<<<<< HEAD
+- Planned work for v0.5.0 will be tracked here.
+=======
 - Planned work for v0.6.0 will be tracked here.
 
 ## [0.5.0] - 2026-07-27
@@ -36,6 +39,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Verified Maven build and test execution after provider abstraction alignment.
 - Verified repository structure for Docker packaging and Kubernetes deployment assets.
 - Verified GitHub Actions workflow creation and push to the feature branch.
+>>>>>>> origin/main
 
 ## [0.4.0] - 2026-07-27
 
@@ -65,6 +69,8 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Initial deterministic alert analysis API.
 - Alert sanitization support.
 - Incident classification, risk mapping, confidence score estimation, and recommended actions.
+<<<<<<< HEAD
+=======
 - Correlation IDs in analysis responses.
 - Confidence score support for alert triage.
 
@@ -111,3 +117,4 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - DTO-based request and response handling.
 - Initial incident classification and recommended action generation.
 - Local development and test execution with Maven Wrapper.
+>>>>>>> origin/main

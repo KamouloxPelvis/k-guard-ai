@@ -4,7 +4,10 @@ import org.devopsnotes.kguard.ai.dto.LlmEnrichment;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+<<<<<<< HEAD
+=======
 import java.util.Objects;
+>>>>>>> origin/main
 
 @Component
 public class LlmProviderRouter {
@@ -24,8 +27,12 @@ public class LlmProviderRouter {
             String sanitizedLog
     ) {
         return providers.stream()
+<<<<<<< HEAD
+                .filter(LlmProvider::isAvailable)
+=======
                 .filter(Objects::nonNull)
                 .filter(provider -> provider.isAvailable())
+>>>>>>> origin/main
                 .findFirst()
                 .map(provider -> provider.enrich(
                         source,
