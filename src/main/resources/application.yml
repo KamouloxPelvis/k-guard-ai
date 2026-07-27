@@ -1,20 +1,26 @@
-<<<<<<< HEAD
+spring:
+  application:
+    name: k-guard-ai
 
-=======
->>>>>>> origin/main
 kguard:
   ai:
     llm:
       enabled: true
       provider: ollama
-      base-url: http://localhost:11434
-      model: qwen3:0.6b
+      base-url: "http://localhost:11434"
+      model: "qwen3:0.6b"
       timeout-seconds: 30
-<<<<<<< HEAD
-=======
 
     elasticsearch:
       export-enabled: false
-      url: http://localhost:9200
-      index: kguard-ai-alerts
->>>>>>> origin/main
+      url: "http://localhost:9200"
+      index: "kguard-ai-alerts"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+  endpoint:
+    health:
+      show-details: never

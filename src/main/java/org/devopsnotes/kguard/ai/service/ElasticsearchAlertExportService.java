@@ -1,58 +1,53 @@
 package org.devopsnotes.kguard.ai.service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.devopsnotes.kguard.ai.config.ElasticsearchProperties;
-import org.devopsnotes.kguard.ai.dto.AlertAnalysisDocument;
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
-@ConditionalOnProperty(prefix = "kguard.ai.elasticsearch", name = "export-enabled", havingValue = "true")
 public class ElasticsearchAlertExportService {
 
-    private static final Logger log = LoggerFactory.getLogger(ElasticsearchAlertExportService.class);
-
-    private final ElasticsearchClient elasticsearchClient;
     private final ElasticsearchProperties properties;
+    private final RestTemplate restTemplate;
 
     public ElasticsearchAlertExportService(
-            ElasticsearchClient elasticsearchClient,
-            ElasticsearchProperties properties
+            ElasticsearchProperties properties,
+            RestTemplateBuilder restTemplateBuilder
     ) {
-        this.elasticsearchClient = elasticsearchClient;
         this.properties = properties;
+        this.restTemplate = restTemplateBuilder.build();
     }
 
     public void export(AlertAnalysisResponse response) {
-        AlertAnalysisDocument document = new AlertAnalysisDocument(
-                response.correlationId(),
-                response.source(),
-                response.severity(),
-                response.incidentType(),
-                response.humanSummary(),
-                response.riskLevel(),
-                response.sanitizedLog(),
-                response.confidenceScore(),
-                response.recommendedActions(),
-                response.llmEnrichment(),
-                Instant.now()
-        );
-
-        try {
-            elasticsearchClient.index(i -> i
-                    .index(properties.index())
-                    .id(response.correlationId())
-                    .document(document)
-            );
-            log.info("Exported alert analysis to Elasticsearch with correlationId={}", response.correlationId());
-        } catch (IOException e) {
-            log.error("Failed to export alert analysis to Elasticsearch with correlationId={}", response.correlationId(), e);
+        if (response == null || !properties.exportEnabled()) {
+            return;
         }
+
+        String url = properties.url() + "/" + properties.index() + "/_doc";
+
+        Map<String, Object> document = new LinkedHashMap<>();
+        document.put("correlationId", response.correlationId());
+        document.put("source", response.source());
+        document.put("severity", response.severity());
+        document.put("incidentType", response.incidentType());
+        document.put("humanSummary", response.humanSummary());
+        document.put("riskLevel", response.riskLevel());
+        document.put("sanitizedLog", response.sanitizedLog());
+        document.put("confidenceScore", response.confidenceScore());
+        document.put("recommendedActions", response.recommendedActions());
+        document.put("llmEnrichment", response.llmEnrichment());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        restTemplate.postForEntity(url, new HttpEntity<>(document, headers), String.class);
     }
 }

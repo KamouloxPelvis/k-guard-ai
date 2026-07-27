@@ -8,9 +8,6 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-<<<<<<< HEAD
-- Planned work for v0.5.0 will be tracked here.
-=======
 - Planned work for v0.6.0 will be tracked here.
 
 ## [0.5.0] - 2026-07-27
@@ -29,6 +26,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Project documentation now reflects container packaging, GHCR publishing, and Kubernetes deployment flow.
 - Alert enrichment architecture is now structured around pluggable providers instead of a direct single-provider coupling.
 - Deployment assets are now portable and repository-friendly for external users.
+- Application configuration now includes Elasticsearch export settings and provider-oriented LLM configuration.
+
+### Fixed
+- Restored valid Spring Boot YAML configuration after merge/refactor conflicts.
+- Fixed bean wiring and service integration issues affecting startup and test stability.
+- Restored successful Maven compile and test execution on Java 21.
 
 ### Security
 - Kubernetes deployment manifests now apply baseline hardening with non-root execution, dropped Linux capabilities, and `RuntimeDefault` seccomp.
@@ -37,9 +40,8 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Validation
 - Verified Maven build and test execution after provider abstraction alignment.
+- Verified Docker image build for local container packaging.
 - Verified repository structure for Docker packaging and Kubernetes deployment assets.
-- Verified GitHub Actions workflow creation and push to the feature branch.
->>>>>>> origin/main
 
 ## [0.4.0] - 2026-07-27
 
@@ -69,8 +71,6 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Initial deterministic alert analysis API.
 - Alert sanitization support.
 - Incident classification, risk mapping, confidence score estimation, and recommended actions.
-<<<<<<< HEAD
-=======
 - Correlation IDs in analysis responses.
 - Confidence score support for alert triage.
 
@@ -117,4 +117,3 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - DTO-based request and response handling.
 - Initial incident classification and recommended action generation.
 - Local development and test execution with Maven Wrapper.
->>>>>>> origin/main
