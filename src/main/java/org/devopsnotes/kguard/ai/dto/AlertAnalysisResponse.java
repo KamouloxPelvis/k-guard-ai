@@ -11,6 +11,7 @@ public record AlertAnalysisResponse(
         String riskLevel,
         String sanitizedLog,
         Double confidenceScore,
-        List<String> recommendedActions
+        List<String> recommendedActions,
+        LlmEnrichment llmEnrichment
 ) {
 }

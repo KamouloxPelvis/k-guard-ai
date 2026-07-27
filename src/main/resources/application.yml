@@ -1,0 +1,9 @@
+
+kguard:
+  ai:
+    llm:
+      enabled: true
+      provider: ollama
+      base-url: http://localhost:11434
+      model: qwen3:0.6b
+      timeout-seconds: 30

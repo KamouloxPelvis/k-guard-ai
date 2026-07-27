@@ -2,6 +2,7 @@ package org.devopsnotes.kguard.ai.service;
 
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
 import org.devopsnotes.kguard.ai.dto.AlertRequest;
+import org.devopsnotes.kguard.ai.dto.LlmEnrichment;
 import org.devopsnotes.kguard.ai.sanitizer.AlertSanitizer;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +13,14 @@ import java.util.UUID;
 public class AlertAnalysisService {
 
     private final AlertSanitizer alertSanitizer;
+    private final LocalLlmEnrichmentService localLlmEnrichmentService;
 
-    public AlertAnalysisService(AlertSanitizer alertSanitizer) {
+    public AlertAnalysisService(
+            AlertSanitizer alertSanitizer,
+            LocalLlmEnrichmentService localLlmEnrichmentService
+    ) {
         this.alertSanitizer = alertSanitizer;
+        this.localLlmEnrichmentService = localLlmEnrichmentService;
     }
 
     public AlertAnalysisResponse analyze(AlertRequest request) {
@@ -25,6 +31,15 @@ public class AlertAnalysisService {
         Double confidenceScore = calculateConfidenceScore(incidentType, sanitizedLog);
         String summary = buildSummary(request.source(), request.title(), incidentType, riskLevel);
 
+        LlmEnrichment llmEnrichment = localLlmEnrichmentService.enrich(
+                request.source(),
+                request.title(),
+                request.severity(),
+                incidentType,
+                riskLevel,
+                sanitizedLog
+        );
+
         return new AlertAnalysisResponse(
                 correlationId,
                 request.source(),
@@ -34,7 +49,8 @@ public class AlertAnalysisService {
                 riskLevel,
                 sanitizedLog,
                 confidenceScore,
-                buildActions(incidentType)
+                buildActions(incidentType),
+                llmEnrichment
         );
     }
 
@@ -79,54 +95,54 @@ public class AlertAnalysisService {
     private String buildSummary(String source, String title, String incidentType, String riskLevel) {
         return switch (incidentType) {
             case "runtime-execution" ->
-                    "Une exécution de shell interactive a été détectée depuis la source " + source +
-                    ". L'événement \"" + title + "\" suggère une activité potentiellement dangereuse dans un conteneur. " +
-                    "Le niveau de risque estimé est " + riskLevel + ".";
+                    "Interactive shell execution was detected from source " + source +
+                    ". The event \"" + title + "\" suggests potentially dangerous activity inside a container. " +
+                    "The estimated risk level is " + riskLevel + ".";
             case "privilege-escalation" ->
-                    "Un comportement lié à une élévation de privilèges a été détecté depuis la source " + source +
-                    ". L'événement \"" + title + "\" nécessite une vérification immédiate. " +
-                    "Le niveau de risque estimé est " + riskLevel + ".";
+                    "Behavior related to privilege escalation was detected from source " + source +
+                    ". The event \"" + title + "\" requires immediate verification. " +
+                    "The estimated risk level is " + riskLevel + ".";
             case "sensitive-data-exposure" ->
-                    "Un élément sensible a été détecté dans le log transmis par " + source +
-                    ". L'événement \"" + title + "\" a été assaini avant traitement. " +
-                    "Le niveau de risque estimé est " + riskLevel + ".";
+                    "Sensitive content was detected in the log sent by " + source +
+                    ". The event \"" + title + "\" was sanitized before processing. " +
+                    "The estimated risk level is " + riskLevel + ".";
             case "endpoint-security-event" ->
-                    "Un événement de sécurité endpoint lié à " + source +
-                    " a été identifié. L'événement \"" + title + "\" doit être corrélé avec les données de conformité et d'inventaire. " +
-                    "Le niveau de risque estimé est " + riskLevel + ".";
+                    "An endpoint security event related to " + source +
+                    " was identified. The event \"" + title + "\" should be correlated with compliance and inventory data. " +
+                    "The estimated risk level is " + riskLevel + ".";
             default ->
-                    "Une alerte de sécurité provenant de " + source +
-                    " a été analysée. L'événement \"" + title + "\" nécessite une revue analyste. " +
-                    "Le niveau de risque estimé est " + riskLevel + ".";
+                    "A security alert from " + source +
+                    " was analyzed. The event \"" + title + "\" requires analyst review. " +
+                    "The estimated risk level is " + riskLevel + ".";
         };
     }
 
     private List<String> buildActions(String incidentType) {
         return switch (incidentType) {
             case "runtime-execution" -> List.of(
-                    "Isoler le pod ou la charge de travail concernée.",
-                    "Vérifier les événements Falco et les logs Kubernetes associés.",
-                    "Confirmer si l'ouverture du shell était autorisée ou non."
+                    "Isolate the affected pod or workload.",
+                    "Review related Falco events and Kubernetes logs.",
+                    "Confirm whether the shell activity was authorized."
             );
             case "privilege-escalation" -> List.of(
-                    "Identifier le compte, le pod ou le processus à l'origine de l'élévation.",
-                    "Vérifier les droits Kubernetes et les security contexts.",
-                    "Lancer une revue de compromission ciblée."
+                    "Identify the account, pod, or process behind the escalation.",
+                    "Review Kubernetes permissions and security contexts.",
+                    "Launch a targeted compromise assessment."
             );
             case "sensitive-data-exposure" -> List.of(
-                    "Confirmer que les données sensibles ont été masquées.",
-                    "Rechercher l'origine de l'exposition dans la chaîne applicative.",
-                    "Empêcher toute réutilisation de secret potentiellement compromis."
+                    "Confirm that sensitive data has been masked.",
+                    "Trace the origin of the exposure in the application flow.",
+                    "Prevent any reuse of potentially compromised secrets."
             );
             case "endpoint-security-event" -> List.of(
-                    "Corréler l'événement avec l'inventaire Wazuh.",
-                    "Vérifier le statut de l'agent et les derniers événements remontés.",
-                    "Qualifier l'impact endpoint avant action de remédiation."
+                    "Correlate the event with Wazuh inventory data.",
+                    "Check the agent status and latest reported events.",
+                    "Assess endpoint impact before remediation."
             );
             default -> List.of(
-                    "Inspecter la ressource d'origine.",
-                    "Corréler avec les événements de sécurité voisins.",
-                    "Qualifier l'alerte avant remédiation."
+                    "Inspect the originating resource.",
+                    "Correlate with nearby security events.",
+                    "Triage the alert before remediation."
             );
         };
     }
