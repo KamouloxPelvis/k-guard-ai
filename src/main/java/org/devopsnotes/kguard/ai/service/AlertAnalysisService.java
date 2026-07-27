@@ -3,6 +3,7 @@ package org.devopsnotes.kguard.ai.service;
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
 import org.devopsnotes.kguard.ai.dto.AlertRequest;
 import org.devopsnotes.kguard.ai.dto.LlmEnrichment;
+import org.devopsnotes.kguard.ai.llm.provider.LlmProviderRouter;
 import org.devopsnotes.kguard.ai.sanitizer.AlertSanitizer;
 import org.springframework.stereotype.Service;
 
@@ -13,14 +14,14 @@ import java.util.UUID;
 public class AlertAnalysisService {
 
     private final AlertSanitizer alertSanitizer;
-    private final LocalLlmEnrichmentService localLlmEnrichmentService;
+    private final LlmProviderRouter llmProviderRouter;
 
     public AlertAnalysisService(
             AlertSanitizer alertSanitizer,
-            LocalLlmEnrichmentService localLlmEnrichmentService
+            LlmProviderRouter llmProviderRouter
     ) {
         this.alertSanitizer = alertSanitizer;
-        this.localLlmEnrichmentService = localLlmEnrichmentService;
+        this.llmProviderRouter = llmProviderRouter;
     }
 
     public AlertAnalysisResponse analyze(AlertRequest request) {
@@ -31,7 +32,7 @@ public class AlertAnalysisService {
         Double confidenceScore = calculateConfidenceScore(incidentType, sanitizedLog);
         String summary = buildSummary(request.source(), request.title(), incidentType, riskLevel);
 
-        LlmEnrichment llmEnrichment = localLlmEnrichmentService.enrich(
+        LlmEnrichment llmEnrichment = llmProviderRouter.enrich(
                 request.source(),
                 request.title(),
                 request.severity(),
