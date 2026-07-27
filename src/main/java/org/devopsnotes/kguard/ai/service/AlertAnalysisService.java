@@ -15,13 +15,16 @@ public class AlertAnalysisService {
 
     private final AlertSanitizer alertSanitizer;
     private final LlmProviderRouter llmProviderRouter;
+    private final ElasticsearchAlertExportService elasticsearchAlertExportService;
 
     public AlertAnalysisService(
             AlertSanitizer alertSanitizer,
-            LlmProviderRouter llmProviderRouter
+            LlmProviderRouter llmProviderRouter,
+            org.springframework.beans.factory.ObjectProvider<ElasticsearchAlertExportService> elasticsearchAlertExportServiceProvider
     ) {
         this.alertSanitizer = alertSanitizer;
         this.llmProviderRouter = llmProviderRouter;
+        this.elasticsearchAlertExportService = elasticsearchAlertExportServiceProvider.getIfAvailable();
     }
 
     public AlertAnalysisResponse analyze(AlertRequest request) {
@@ -41,7 +44,7 @@ public class AlertAnalysisService {
                 sanitizedLog
         );
 
-        return new AlertAnalysisResponse(
+        AlertAnalysisResponse response = new AlertAnalysisResponse(
                 correlationId,
                 request.source(),
                 request.severity(),
@@ -53,6 +56,12 @@ public class AlertAnalysisService {
                 buildActions(incidentType),
                 llmEnrichment
         );
+
+        if (elasticsearchAlertExportService != null) {
+            elasticsearchAlertExportService.export(response);
+        }
+
+        return response;
     }
 
     private String classifyIncident(String raw) {

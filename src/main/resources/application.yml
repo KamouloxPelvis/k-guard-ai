@@ -1,4 +1,3 @@
-
 kguard:
   ai:
     llm:
@@ -7,3 +6,8 @@ kguard:
       base-url: http://localhost:11434
       model: qwen3:0.6b
       timeout-seconds: 30
+
+    elasticsearch:
+      export-enabled: false
+      url: http://localhost:9200
+      index: kguard-ai-alerts
