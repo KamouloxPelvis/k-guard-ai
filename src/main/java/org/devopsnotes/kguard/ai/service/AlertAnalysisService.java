@@ -1,5 +1,6 @@
 package org.devopsnotes.kguard.ai.service;
 
+import org.devopsnotes.kguard.ai.config.KguardAiProperties;
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
 import org.devopsnotes.kguard.ai.dto.AlertRequest;
 import org.devopsnotes.kguard.ai.dto.LlmEnrichment;
@@ -16,20 +17,24 @@ public class AlertAnalysisService {
     private final AlertSanitizer alertSanitizer;
     private final LlmProviderRouter llmProviderRouter;
     private final ElasticsearchAlertExportService elasticsearchAlertExportService;
+    private final KguardAiProperties properties;
 
     public AlertAnalysisService(
             AlertSanitizer alertSanitizer,
             LlmProviderRouter llmProviderRouter,
-            ElasticsearchAlertExportService elasticsearchAlertExportService
+            ElasticsearchAlertExportService elasticsearchAlertExportService,
+            KguardAiProperties properties
     ) {
         this.alertSanitizer = alertSanitizer;
         this.llmProviderRouter = llmProviderRouter;
         this.elasticsearchAlertExportService = elasticsearchAlertExportService;
+        this.properties = properties;
     }
 
     public AlertAnalysisResponse analyze(AlertRequest request) {
         String correlationId = UUID.randomUUID().toString();
-        String sanitizedLog = alertSanitizer.sanitize(request.rawLog());
+        String boundedRawLog = boundRawLog(request.rawLog());
+        String sanitizedLog = alertSanitizer.sanitize(boundedRawLog);
         String incidentType = classifyIncident(sanitizedLog);
         String riskLevel = mapRiskLevel(request.severity());
         Double confidenceScore = calculateConfidenceScore(incidentType, sanitizedLog);
@@ -51,7 +56,7 @@ public class AlertAnalysisService {
                 incidentType,
                 summary,
                 riskLevel,
-                sanitizedLog,
+                properties.includeSanitizedLogInResponse() ? sanitizedLog : null,
                 confidenceScore,
                 buildActions(incidentType),
                 llmEnrichment
@@ -59,6 +64,17 @@ public class AlertAnalysisService {
 
         elasticsearchAlertExportService.export(response);
         return response;
+    }
+
+    private String boundRawLog(String rawLog) {
+        if (rawLog == null || rawLog.isBlank()) {
+            return "";
+        }
+        int maxLength = properties.maxRawLogLength();
+        if (rawLog.length() <= maxLength) {
+            return rawLog;
+        }
+        return rawLog.substring(0, maxLength);
     }
 
     private String classifyIncident(String raw) {
@@ -92,7 +108,9 @@ public class AlertAnalysisService {
     }
 
     private Double calculateConfidenceScore(String incidentType, String sanitizedLog) {
-        if ("runtime-execution".equals(incidentType) && sanitizedLog.toLowerCase().contains("bash")) return 0.95;
+        String normalizedLog = sanitizedLog == null ? "" : sanitizedLog.toLowerCase();
+
+        if ("runtime-execution".equals(incidentType) && normalizedLog.contains("bash")) return 0.95;
         if ("privilege-escalation".equals(incidentType)) return 0.85;
         if ("sensitive-data-exposure".equals(incidentType)) return 0.90;
         if ("endpoint-security-event".equals(incidentType)) return 0.80;

@@ -1,26 +1,115 @@
 spring:
   application:
     name: k-guard-ai
+  profiles:
+    default: local
+
+info:
+  app:
+    name: K-Guard AI
+    description: Portable security alert analysis microservice
+    apiVersion: v1
+    portability: agnostic
+    deploymentTargets:
+      - local
+      - vps
+      - kubernetes
 
 kguard:
   ai:
+    max-raw-log-length: 4000
+    default-language: en
+    include-sanitized-log-in-response: true
     llm:
       enabled: true
       provider: ollama
-      base-url: "http://localhost:11434"
-      model: "qwen3:0.6b"
+      base-url: http://localhost:11434
+      model: qwen3:0.6b
       timeout-seconds: 30
-
     elasticsearch:
       export-enabled: false
-      url: "http://localhost:9200"
-      index: "kguard-ai-alerts"
+      url: http://localhost:9200
+      index: kguard-ai-alerts
 
 management:
   endpoints:
     web:
       exposure:
-        include: "health,info"
+        include: health,info
   endpoint:
     health:
-      show-details: never
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    elasticsearch:
+      enabled: false
+  info:
+    env:
+      enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+kguard:
+  ai:
+    max-raw-log-length: 4000
+    default-language: en
+    include-sanitized-log-in-response: true
+    llm:
+      enabled: true
+      provider: ollama
+      base-url: http://localhost:11434
+      model: qwen3:0.6b
+      timeout-seconds: 30
+    elasticsearch:
+      export-enabled: false
+      url: http://localhost:9200
+      index: kguard-ai-alerts
+
+---
+spring:
+  config:
+    activate:
+      on-profile: vps
+
+kguard:
+  ai:
+    max-raw-log-length: ${KGUARD_AI_MAX_RAW_LOG_LENGTH:4000}
+    default-language: ${KGUARD_AI_DEFAULT_LANGUAGE:en}
+    include-sanitized-log-in-response: ${KGUARD_AI_INCLUDE_SANITIZED_LOG_IN_RESPONSE:true}
+    llm:
+      enabled: ${KGUARD_AI_LLM_ENABLED:false}
+      provider: ${KGUARD_AI_LLM_PROVIDER:ollama}
+      base-url: ${KGUARD_AI_LLM_BASE_URL:http://127.0.0.1:11434}
+      model: ${KGUARD_AI_LLM_MODEL:qwen3:0.6b}
+      timeout-seconds: ${KGUARD_AI_LLM_TIMEOUT_SECONDS:30}
+    elasticsearch:
+      export-enabled: ${KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED:false}
+      url: ${KGUARD_AI_ELASTICSEARCH_URL:http://127.0.0.1:9200}
+      index: ${KGUARD_AI_ELASTICSEARCH_INDEX:kguard-ai-alerts}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+
+kguard:
+  ai:
+    max-raw-log-length: ${KGUARD_AI_MAX_RAW_LOG_LENGTH:4000}
+    default-language: ${KGUARD_AI_DEFAULT_LANGUAGE:en}
+    include-sanitized-log-in-response: ${KGUARD_AI_INCLUDE_SANITIZED_LOG_IN_RESPONSE:true}
+    llm:
+      enabled: ${KGUARD_AI_LLM_ENABLED:false}
+      provider: ${KGUARD_AI_LLM_PROVIDER:ollama}
+      base-url: ${KGUARD_AI_LLM_BASE_URL:http://ollama:11434}
+      model: ${KGUARD_AI_LLM_MODEL:qwen3:0.6b}
+      timeout-seconds: ${KGUARD_AI_LLM_TIMEOUT_SECONDS:30}
+    elasticsearch:
+      export-enabled: ${KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED:false}
+      url: ${KGUARD_AI_ELASTICSEARCH_URL:http://elasticsearch:9200}
+      index: ${KGUARD_AI_ELASTICSEARCH_INDEX:kguard-ai-alerts}

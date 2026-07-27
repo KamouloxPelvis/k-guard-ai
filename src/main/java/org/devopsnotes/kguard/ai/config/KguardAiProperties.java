@@ -6,13 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-@ConfigurationProperties(prefix = "kguard.ai.llm")
+@ConfigurationProperties(prefix = "kguard.ai")
 @Validated
-public record LlmProperties(
-        boolean enabled,
-        @NotBlank String provider,
-        @NotBlank String baseUrl,
-        @NotBlank String model,
-        @Min(1) @Max(300) int timeoutSeconds
+public record KguardAiProperties(
+        @Min(256) @Max(20000) int maxRawLogLength,
+        @NotBlank String defaultLanguage,
+        boolean includeSanitizedLogInResponse
 ) {
 }
