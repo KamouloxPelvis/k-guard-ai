@@ -56,7 +56,7 @@ Current processing flow:
 - Wazuh
 - Elasticsearch
 - Kibana
-- vLLM (planned)
+- Ollama
 
 ## API
 
