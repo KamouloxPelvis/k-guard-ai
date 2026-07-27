@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import java.util.Objects;
+
 @Configuration
 @EnableConfigurationProperties(LlmProperties.class)
 public class LlmConfig {
@@ -17,7 +19,7 @@ public class LlmConfig {
         requestFactory.setReadTimeout(properties.timeoutSeconds() * 1000);
 
         return RestClient.builder()
-                .baseUrl(properties.baseUrl())
+                .baseUrl(Objects.requireNonNull(properties.baseUrl(), "kguard.ai.llm.base-url must not be null"))
                 .requestFactory(requestFactory)
                 .build();
     }

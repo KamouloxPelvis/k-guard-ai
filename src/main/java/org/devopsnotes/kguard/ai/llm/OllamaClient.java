@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class OllamaClient {
@@ -34,8 +35,8 @@ public class OllamaClient {
 
         OllamaChatResponse response = restClient.post()
                 .uri("/api/chat")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON, "MediaType.APPLICATION_JSON must not be null"))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON, "MediaType.APPLICATION_JSON must not be null"))
                 .body(request)
                 .retrieve()
                 .body(OllamaChatResponse.class);
