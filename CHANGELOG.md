@@ -8,7 +8,31 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Planned work for v0.6.0 will be tracked here.
+- Planned work for the next release will be tracked here.
+
+## [0.6.0] - 2026-07-27
+
+### Added
+- Normalized alert ingestion endpoint for structured security event intake.
+- Service capabilities endpoint for runtime feature and profile introspection.
+- Centralized `KguardAiProperties` configuration model for service behavior.
+- Profile-aware runtime configuration for `local`, `vps`, and `kubernetes`.
+
+### Changed
+- Refactored configuration binding for LLM and Elasticsearch settings.
+- Improved alert analysis flow to support normalized ingestion before deterministic analysis.
+- Updated application configuration to expose portable runtime profiles.
+
+### Fixed
+- Disabled Elasticsearch health contribution when Elasticsearch export is not in use.
+- Restored clean global health reporting for the VPS deployment profile.
+- Stabilized container runtime behavior for a minimal VPS deployment.
+
+### Validation
+- Verified Maven build and test execution on Java 21.
+- Verified Docker image build for the `v0.6.0` runtime path.
+- Verified VPS container startup with `health`, `liveness`, and `readiness` all reporting `UP`.
+- Verified normalized ingestion endpoint behavior with a Falco-style runtime event payload.
 
 ## [0.5.0] - 2026-07-27
 
