@@ -1,6 +1,6 @@
 # K-Guard AI
 
-Current release: v0.6.0
+Current release: v0.7.0
 
 K-Guard AI is a Java 21 and Spring Boot microservice that transforms raw or normalized security alerts into structured, human-readable incident analysis for K-Guard and similar security workflows.
 
@@ -8,7 +8,7 @@ It is designed as a portable backend component for DevSecOps, SOC, and platform 
 
 ## Disclaimer
 
-K-Guard AI is a personal and experimental MVP built for portfolio, research, and learning purposes.
+K-Guard AI is a personal and experimental MVP built for portfolio, research, and learning purposes.  
 It is not a production-ready SOC platform and must be reviewed, tested, hardened, and validated before use in sensitive or regulated environments.
 
 ## Overview
@@ -28,6 +28,7 @@ Current capabilities:
 - Optionally export analyzed alerts to Elasticsearch.
 - Expose service capabilities for runtime inspection.
 - Provide container packaging and portable Kubernetes manifests for deployment.
+- Provide an interactive Kubernetes installer for namespace-aware deployment.
 
 ## Architecture
 
@@ -36,9 +37,9 @@ Current processing flow:
 2. K-Guard AI validates and sanitizes the payload.
 3. K-Guard AI normalizes contextual fields when using the normalized ingestion path.
 4. K-Guard AI classifies the incident and generates a deterministic summary.
-5. K-Guard AI optionally forwards sanitized context to a configured LLM provider.
+5. K-Guard AI optionally forwards sanitized context to a local Ollama runtime.
 6. K-Guard AI optionally exports the analyzed alert to Elasticsearch.
-7. The API returns a structured response containing deterministic analysis and optional LLM enrichment.
+7. The API returns a structured response containing deterministic analysis and optional local LLM enrichment.
 
 ## Implemented components
 
@@ -58,7 +59,7 @@ Current processing flow:
 - Service capabilities endpoint.
 - Spring Boot Actuator health and info endpoints.
 
-### LLM integration
+### Local AI integration
 - Provider abstraction layer.
 - Ollama provider implementation.
 - Local model support for lightweight enrichment workflows.
@@ -68,7 +69,8 @@ Current processing flow:
 - GitHub Actions workflow for GHCR publishing.
 - Kubernetes manifests in `k8s/`.
 - ConfigMap-based runtime configuration.
-- Portable secret placeholder for optional sensitive settings.
+- Kubernetes Secret integration for Elasticsearch credentials.
+- Interactive Kubernetes installer in `installer/`.
 - Profile-aware configuration for local, VPS, and Kubernetes targets.
 
 ## Tech stack
@@ -81,6 +83,11 @@ Current processing flow:
 - Spring Actuator
 - Jackson
 - Maven Wrapper
+
+### Installer
+- Go
+- kubectl
+- Kubernetes / K3s oriented deployment workflow
 
 ### Local AI
 - Ollama
@@ -143,7 +150,7 @@ Example response:
 ```json
 {
   "service": "k-guard-ai",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "defaultLanguage": "en",
   "maxRawLogLength": 4000,
   "includeSanitizedLogInResponse": true,
@@ -227,8 +234,47 @@ ollama pull qwen3:0.6b
 ### Build container image
 
 ```bash
-docker build -t kguard-ai:v0.6.0 .
+docker build -t kguard-ai:v0.7.0 .
 ```
+
+## Kubernetes installer
+
+K-Guard AI ships with an interactive Kubernetes installer located in `installer/`.
+
+Current installer behavior:
+- Checks that `kubectl` is available.
+- Checks cluster accessibility with the current kubeconfig.
+- Detects namespace `k-guard` and uses it by default when it exists.
+- Otherwise asks the user to enter a target namespace.
+- Prompts the user for the Elasticsearch username.
+- Prompts the user for the Elasticsearch password without echoing it in the terminal.
+- Creates or updates the Kubernetes Secret `kguard-ai-secret`.
+- Applies the ConfigMap, Deployment, and Service manifests.
+- Waits for the deployment rollout status.
+
+### Run installer locally
+
+```bash
+cd installer
+go run . check
+go run . install
+go run . status
+```
+
+## VPS deployment approach
+
+For the current v0.7.0 workflow, the simplest supported deployment approach is to clone the repository on the target machine and run the required commands from the project directory.
+
+Example:
+
+```bash
+git clone https://github.com/devopsnotes/k-guard-ai.git
+cd k-guard-ai
+```
+
+From there, you can either:
+- run the Java service locally or in Docker for a VPS-oriented setup;
+- or use the Kubernetes installer from `installer/` for a cluster-connected environment.
 
 ## VPS runtime example
 
@@ -241,7 +287,7 @@ docker run -d --name kguard-ai \
   -e SPRING_PROFILES_ACTIVE=vps \
   -e KGUARD_AI_LLM_ENABLED=false \
   -e KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED=false \
-  ghcr.io/kamouloxpelvis/k-guard-ai:v0.6.0
+  ghcr.io/kamouloxpelvis/k-guard-ai:v0.7.0
 ```
 
 ## Integration approach
@@ -249,7 +295,20 @@ docker run -d --name kguard-ai \
 Recommended first integration path with K-Guard:
 - K-Guard sends alerts to K-Guard AI over HTTP.
 - K-Guard AI returns deterministic JSON analysis.
-- Optional LLM enrichment remains disabled for the initial VPS deployment.
-- Optional Elasticsearch export can be enabled later if needed.
+- Optional Ollama enrichment can be enabled depending on the target environment.
+- Optional Elasticsearch export can be enabled when downstream indexing is required.
 
 This keeps the first portfolio integration simple, portable, and easy to troubleshoot.
+
+## Repository structure
+
+```text
+.
+├── installer/                 # Interactive Kubernetes installer written in Go
+├── k8s/                       # Kubernetes manifests
+├── src/                       # Spring Boot application source code
+├── .github/workflows/         # CI workflow(s)
+├── Dockerfile
+├── pom.xml
+└── README.md
+```
