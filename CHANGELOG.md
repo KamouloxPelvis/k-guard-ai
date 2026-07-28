@@ -8,7 +8,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Planned work for the next release will be tracked here.
+- Planned work for v0.8.0 security hardening will be tracked here.
+- GitHub CodeQL analysis for the Java codebase.
+- Dependabot version updates for Maven and GitHub Actions.
+
+### Security
+- Kubernetes deployment hardening with non-root execution and restricted container privileges.
 
 ## [0.6.0] - 2026-07-27
 
