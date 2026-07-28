@@ -268,13 +268,22 @@ For the current v0.7.0 workflow, the simplest supported deployment approach is t
 Example:
 
 ```bash
-git clone https://github.com/devopsnotes/k-guard-ai.git
+git clone https://github.com/KamouloxPelvis/K-Guard-AI.git
 cd k-guard-ai
 ```
 
 From there, you can either:
 - run the Java service locally or in Docker for a VPS-oriented setup;
 - or use the Kubernetes installer from `installer/` for a cluster-connected environment.
+
+### Update on target machine
+
+For a simple update workflow on the target machine:
+
+```bash
+cd K-Guard-AI
+git pull
+```
 
 ## VPS runtime example
 
