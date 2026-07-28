@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k-guard-ai
+  labels:
+    app.kubernetes.io/name: k-guard-ai
+    app.kubernetes.io/part-of: k-guard
