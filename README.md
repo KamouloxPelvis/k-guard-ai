@@ -1,6 +1,6 @@
 # K-Guard AI
 
-Current release: v0.6.0
+Current release: v0.8.0
 
 K-Guard AI is a Java 21 and Spring Boot microservice that transforms raw or normalized security alerts into structured, human-readable incident analysis for K-Guard and similar security workflows.
 
@@ -65,10 +65,9 @@ Current processing flow:
 
 ### Delivery and deployment
 - Docker image build support.
-- GitHub Actions workflow for GHCR publishing.
+- GitHub Actions workflow for GitHub Container Registry publishing.
+- GitHub Actions pull request CI workflow for protected branch validation.
 - Kubernetes manifests in `k8s/`.
-- ConfigMap-based runtime configuration.
-- Portable secret placeholder for optional sensitive settings.
 - Profile-aware configuration for local, VPS, and Kubernetes targets.
 
 ## Tech stack
@@ -85,6 +84,13 @@ Current processing flow:
 ### Local AI
 - Ollama
 - Qwen3 (`qwen3:0.6b`) for the current lightweight local MVP path
+
+### Security and governance
+- GitHub CodeQL
+- Dependabot
+- CODEOWNERS
+- Branch protection rules
+- Hardened Kubernetes security context
 
 ### Target ecosystem
 - Kubernetes
@@ -143,7 +149,7 @@ Example response:
 ```json
 {
   "service": "k-guard-ai",
-  "version": "0.6.0",
+  "version": "0.8.0",
   "defaultLanguage": "en",
   "maxRawLogLength": 4000,
   "includeSanitizedLogInResponse": true,
@@ -227,16 +233,18 @@ ollama pull qwen3:0.6b
 ### Build container image
 
 ```bash
-docker build -t kguard-ai:v0.6.0 .
+docker build -t kguard-ai:v0.8.0 .
 ```
 
 ## Security baseline
 
-The current security baseline for the upcoming v0.8.0 line includes:
+The current security baseline includes:
 
 - GitHub CodeQL analysis for the Java codebase
 - Dependabot updates for Maven dependencies and GitHub Actions
-- Hardened Kubernetes runtime settings with non-root execution, dropped capabilities, read-only root filesystem, and `RuntimeDefault` seccomp
+- CODEOWNERS-based review ownership
+- Protected `main` branch with required pull request validation
+- Hardened Kubernetes runtime settings with non-root execution, dropped capabilities, read-only root filesystem, `allowPrivilegeEscalation: false`, and `RuntimeDefault` seccomp
 
 ## VPS runtime example
 
@@ -249,7 +257,7 @@ docker run -d --name kguard-ai \
   -e SPRING_PROFILES_ACTIVE=vps \
   -e KGUARD_AI_LLM_ENABLED=false \
   -e KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED=false \
-  ghcr.io/kamouloxpelvis/k-guard-ai:v0.6.0
+  ghcr.io/kamouloxpelvis/k-guard-ai:v0.8.0
 ```
 
 ## Integration approach
