@@ -230,6 +230,14 @@ ollama pull qwen3:0.6b
 docker build -t kguard-ai:v0.6.0 .
 ```
 
+## Security baseline
+
+The current security baseline for the upcoming v0.8.0 line includes:
+
+- GitHub CodeQL analysis for the Java codebase
+- Dependabot updates for Maven dependencies and GitHub Actions
+- Hardened Kubernetes runtime settings with non-root execution, dropped capabilities, read-only root filesystem, and `RuntimeDefault` seccomp
+
 ## VPS runtime example
 
 Example minimal VPS startup with deterministic analysis only:

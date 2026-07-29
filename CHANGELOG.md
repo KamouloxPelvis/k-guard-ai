@@ -13,7 +13,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Dependabot version updates for Maven and GitHub Actions.
 
 ### Security
-- Kubernetes deployment hardening with non-root execution and restricted container privileges.
+- Kubernetes deployment hardening with non-root execution, explicit runtime identity, dropped capabilities, read-only root filesystem, and writable `/tmp` through `emptyDir`.
 
 ## [0.6.0] - 2026-07-27
 
