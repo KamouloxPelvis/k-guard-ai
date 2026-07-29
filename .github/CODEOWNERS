@@ -1,0 +1,21 @@
+# Default owner for the whole repository
+* @KamouloxPelvis
+
+# GitHub configuration and CI/CD
+/.github/ @KamouloxPelvis
+
+# Kubernetes manifests and deployment docs
+/k8s/ @KamouloxPelvis
+
+# Go installer
+/installer/ @KamouloxPelvis
+
+# Java / Spring Boot application
+/src/ @KamouloxPelvis
+/pom.xml @KamouloxPelvis
+/mvnw @KamouloxPelvis
+/.mvn/ @KamouloxPelvis
+
+# Root documentation
+/README.md @KamouloxPelvis
+/CHANGELOG.md @KamouloxPelvis
