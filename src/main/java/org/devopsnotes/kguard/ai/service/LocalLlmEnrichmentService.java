@@ -1,7 +1,7 @@
 package org.devopsnotes.kguard.ai.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.devopsnotes.kguard.ai.config.LlmProperties;
 import org.devopsnotes.kguard.ai.dto.LlmEnrichment;
 import org.devopsnotes.kguard.ai.llm.OllamaClient;

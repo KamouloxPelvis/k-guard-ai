@@ -2,7 +2,6 @@ package org.devopsnotes.kguard.ai.service;
 
 import org.devopsnotes.kguard.ai.config.ElasticsearchProperties;
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,10 +19,10 @@ public class ElasticsearchAlertExportService {
 
     public ElasticsearchAlertExportService(
             ElasticsearchProperties properties,
-            RestTemplateBuilder restTemplateBuilder
+            RestTemplate restTemplate
     ) {
         this.properties = properties;
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplate;
     }
 
     public void export(AlertAnalysisResponse response) {
