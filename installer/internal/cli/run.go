@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -20,7 +21,7 @@ func Run(args []string) error {
 	case "check":
 		return runCheck()
 	case "install":
-		return runInstall()
+		return RunTUI()
 	case "status":
 		return runStatus()
 	default:
@@ -62,7 +63,7 @@ func runCheck() error {
 	return nil
 }
 
-func runInstall() error {
+func runInstall(out io.Writer) error {
 	if err := kube.CheckKubectl(); err != nil {
 		return err
 	}
@@ -75,50 +76,50 @@ func runInstall() error {
 		return err
 	}
 
-	fmt.Printf("[install] Target namespace: %s\n", namespace)
+	fmt.Fprintf(out, "[install] Target namespace: %s\n", namespace)
 
-	if !confirmInstall(namespace) {
+	if !confirmInstall(namespace, out) {
 		return fmt.Errorf("installation cancelled by user")
 	}
 
 	if !kube.NamespaceExists(namespace) {
-		fmt.Printf("[install] Creating namespace: %s\n", namespace)
+		fmt.Fprintf(out, "[install] Creating namespace: %s\n", namespace)
 		if err := kube.EnsureNamespace(namespace); err != nil {
 			return err
 		}
 	}
 
-	esUsername, esPassword, err := promptElasticsearchCredentials()
+	esUsername, esPassword, err := promptElasticsearchCredentials(out)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("[install] Applying Elasticsearch Secret...")
+	fmt.Fprintln(out, "[install] Applying Elasticsearch Secret...")
 	if err := kube.ApplyElasticsearchSecret(namespace, "kguard-ai-secret", esUsername, esPassword); err != nil {
 		return err
 	}
 
-	fmt.Println("[install] Applying ConfigMap...")
+	fmt.Fprintln(out, "[install] Applying ConfigMap...")
 	if err := kube.ApplyFile(namespace, "../k8s/configmap.yaml"); err != nil {
 		return err
 	}
 
-	fmt.Println("[install] Applying Deployment...")
+	fmt.Fprintln(out, "[install] Applying Deployment...")
 	if err := kube.ApplyFile(namespace, "../k8s/deployment.yaml"); err != nil {
 		return err
 	}
 
-	fmt.Println("[install] Applying Service...")
+	fmt.Fprintln(out, "[install] Applying Service...")
 	if err := kube.ApplyFile(namespace, "../k8s/service.yaml"); err != nil {
 		return err
 	}
 
-	fmt.Println("[install] Waiting for rollout...")
+	fmt.Fprintln(out, "[install] Waiting for rollout...")
 	if err := kube.RolloutStatus(namespace, "kguard-ai"); err != nil {
 		return err
 	}
 
-	fmt.Println("K-Guard AI installation completed")
+	fmt.Fprintln(out, "K-Guard AI installation completed")
 	return nil
 }
 
@@ -159,16 +160,16 @@ func resolveNamespace() (string, error) {
 	return ns, nil
 }
 
-func confirmInstall(namespace string) bool {
+func confirmInstall(namespace string, out io.Writer) bool {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("[install] Summary")
-	fmt.Printf("  Namespace : %s\n", namespace)
-	fmt.Println("  Secret    : kguard-ai-secret (will be created or updated)")
-	fmt.Println("  ConfigMap : kguard-ai-config")
-	fmt.Println("  Deployment: kguard-ai")
-	fmt.Println("  Service   : kguard-ai")
-	fmt.Print("Proceed? [y/N]: ")
+	fmt.Fprintln(out, "[install] Summary")
+	fmt.Fprintf(out, "  Namespace : %s\n", namespace)
+	fmt.Fprintln(out, "  Secret    : kguard-ai-secret (will be created or updated)")
+	fmt.Fprintln(out, "  ConfigMap : kguard-ai-config")
+	fmt.Fprintln(out, "  Deployment: kguard-ai")
+	fmt.Fprintln(out, "  Service   : kguard-ai")
+	fmt.Fprint(out, "Proceed? [y/N]: ")
 
 	answer, err := reader.ReadString('\n')
 	if err != nil {
@@ -179,10 +180,10 @@ func confirmInstall(namespace string) bool {
 	return answer == "y" || answer == "yes"
 }
 
-func promptElasticsearchCredentials() (string, string, error) {
+func promptElasticsearchCredentials(out io.Writer) (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Elasticsearch username: ")
+	fmt.Fprint(out, "Elasticsearch username: ")
 	username, err := reader.ReadString('\n')
 	if err != nil {
 		return "", "", err
@@ -192,9 +193,9 @@ func promptElasticsearchCredentials() (string, string, error) {
 		return "", "", fmt.Errorf("elasticsearch username cannot be empty")
 	}
 
-	fmt.Print("Elasticsearch password: ")
+	fmt.Fprint(out, "Elasticsearch password: ")
 	passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
+	fmt.Fprintln(out)
 	if err != nil {
 		return "", "", err
 	}
