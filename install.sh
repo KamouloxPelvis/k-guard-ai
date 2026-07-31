@@ -17,7 +17,7 @@ echo "[kguard-ai] Root installer starting..."
 echo "[kguard-ai] Repository directory: ${REPO_DIR}"
 echo
 
-# --- Basic dependency checks (with Go auto-install) ---
+# --- Basic dependency checks (no auto-install) ---
 
 # Check git
 if ! command -v git >/dev/null 2>&1; then
@@ -34,26 +34,13 @@ if ! command -v kubectl >/dev/null 2>&1; then
   exit 1
 fi
 
-# Check Go, auto-install if missing (Debian/Ubuntu)
+# Check Go
 if ! command -v go >/dev/null 2>&1; then
-  echo "[kguard-ai] 'go' is not installed. Attempting to install Go via apt..."
-
-  if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update
-    sudo apt-get install -y golang
-
-    if ! command -v go >/dev/null 2>&1; then
-      echo "[kguard-ai] ERROR: 'go' is still not available after installation."
-      echo "[kguard-ai] Please check your Go installation and PATH."
-      exit 1
-    fi
-
-    echo "[kguard-ai] Go installed successfully."
-  } else {
-    echo "[kguard-ai] ERROR: 'apt-get' not found. Automatic Go installation is only supported on Debian/Ubuntu."
-    echo "[kguard-ai] Please install Go manually (version 1.22+ recommended) and retry."
-    exit 1
-  fi
+  echo "[kguard-ai] ERROR: 'go' is not installed or not in PATH."
+  echo "[kguard-ai] Please install Go (version 1.22+ recommended) on this host, then retry."
+  echo "[kguard-ai] On Debian/Ubuntu, you can run for example:"
+  echo "  sudo apt-get update && sudo apt-get install -y golang"
+  exit 1
 fi
 
 echo "[kguard-ai] Dependencies OK (git, go, kubectl)."
