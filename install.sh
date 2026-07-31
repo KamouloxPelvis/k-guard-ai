@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ---------------------------------------------------------
-# K-Guard AI root installer
+# K-Guard AI root installer (v0.8.0)
 # Usage:
 #   git clone https://github.com/KamouloxPelvis/K-Guard-AI.git
 #   cd K-Guard-AI
@@ -17,14 +17,44 @@ echo "[kguard-ai] Root installer starting..."
 echo "[kguard-ai] Repository directory: ${REPO_DIR}"
 echo
 
-# --- Basic dependency checks ---
-for cmd in git go kubectl; do
-  if ! command -v "${cmd}" >/dev/null 2>&1; then
-    echo "[kguard-ai] ERROR: '${cmd}' is not installed or not in PATH."
-    echo "[kguard-ai] Please install '${cmd}' and retry."
+# --- Basic dependency checks (with Go auto-install) ---
+
+# Check git
+if ! command -v git >/dev/null 2>&1; then
+  echo "[kguard-ai] ERROR: 'git' is not installed or not in PATH."
+  echo "[kguard-ai] Please install 'git' (e.g. sudo apt-get install -y git) and retry."
+  exit 1
+fi
+
+# Check kubectl
+if ! command -v kubectl >/dev/null 2>&1; then
+  echo "[kguard-ai] ERROR: 'kubectl' is not installed or not in PATH."
+  echo "[kguard-ai] K-Guard AI installer expects a reachable k3s/Kubernetes cluster through kubectl."
+  echo "[kguard-ai] Please install 'kubectl' and configure your kubeconfig, then retry."
+  exit 1
+fi
+
+# Check Go, auto-install if missing (Debian/Ubuntu)
+if ! command -v go >/dev/null 2>&1; then
+  echo "[kguard-ai] 'go' is not installed. Attempting to install Go via apt..."
+
+  if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y golang
+
+    if ! command -v go >/dev/null 2>&1; then
+      echo "[kguard-ai] ERROR: 'go' is still not available after installation."
+      echo "[kguard-ai] Please check your Go installation and PATH."
+      exit 1
+    fi
+
+    echo "[kguard-ai] Go installed successfully."
+  } else {
+    echo "[kguard-ai] ERROR: 'apt-get' not found. Automatic Go installation is only supported on Debian/Ubuntu."
+    echo "[kguard-ai] Please install Go manually (version 1.22+ recommended) and retry."
     exit 1
   fi
-done
+fi
 
 echo "[kguard-ai] Dependencies OK (git, go, kubectl)."
 echo
@@ -45,15 +75,15 @@ echo
 # --- Run initial check via TUI/CLI installer ---
 echo "[kguard-ai] Checking kubectl and cluster access via installer..."
 "${BINARY}" check || {
-  echo "[kguard-ai] WARNING: 'check' failed. You can still run the installer,"
-  echo "but cluster access issues must be resolved."
+  echo "[kguard-ai] WARNING: 'check' failed. K-Guard AI installer expects a reachable k3s/Kubernetes cluster through kubectl."
+  echo "[kguard-ai] You can still run the installer, but cluster access issues must be resolved."
 }
 echo
 
 echo "============================================"
-echo "K-Guard AI Installer"
+echo "K-Guard AI Installer (v0.8.0)"
 echo "============================================"
-echo "You can now choose:"
+echo "You can now choose (in the current k3s/Kubernetes cluster):"
 echo "  - TUI mode  : ${BINARY}"
 echo "  - CLI mode  : ${BINARY} install"
 echo "  - Status    : ${BINARY} status"
