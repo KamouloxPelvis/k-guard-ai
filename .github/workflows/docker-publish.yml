@@ -78,6 +78,20 @@ jobs:
           git diff --cached --quiet || git commit -m "Update K-Guard AI image tag to ${NEW_TAG}"
           git push
     
+      - name: Debug kubeconfig decoding
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          echo "Length of secret:"
+          echo "$KUBE_CONFIG_B64" | wc -c
+
+          echo "Trying base64 decode..."
+          echo "$KUBE_CONFIG_B64" | base64 -d > /tmp/kubeconfig-test
+
+          echo "First lines of decoded config:"
+          head -n 5 /tmp/kubeconfig-test
+
       - name: Deploy to k3s cluster
         env:
           KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
