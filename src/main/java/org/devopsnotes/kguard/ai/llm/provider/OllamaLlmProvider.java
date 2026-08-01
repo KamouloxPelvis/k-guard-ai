@@ -58,15 +58,20 @@ public class OllamaLlmProvider implements LlmProvider {
 
         String prompt = buildPrompt(source, title, severity, incidentType, riskLevel, sanitizedLog);
 
-        log.info("Calling Ollama LLM at {} with model {}", baseUrl, model);
+        log.info("Calling Ollama LLM at {} with model {} via /api/chat", baseUrl, model);
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            Map<String, Object> message = Map.of(
+                    "role", "user",
+                    "content", prompt
+            );
+
             Map<String, Object> body = Map.of(
                     "model", model,
-                    "prompt", prompt,
+                    "messages", List.of(message),
                     "stream", false
             );
 
@@ -74,7 +79,7 @@ public class OllamaLlmProvider implements LlmProvider {
 
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.postForObject(
-                    baseUrl + "/api/generate",
+                    baseUrl + "/api/chat",
                     requestEntity,
                     Map.class
             );
@@ -84,10 +89,17 @@ public class OllamaLlmProvider implements LlmProvider {
                 return fallbackEnrichment(model, "No response from Ollama");
             }
 
-            Object respText = response.get("response");
-            String text = respText != null ? respText.toString() : "";
+            Object messageObj = response.get("message");
+            String text = "";
 
-            log.info("Ollama raw response: {}", text);
+            if (messageObj instanceof Map<?, ?> messageMap) {
+                Object content = messageMap.get("content");
+                if (content != null) {
+                    text = content.toString();
+                }
+            }
+
+            log.info("Ollama raw response (chat): {}", text);
 
             return new LlmEnrichment(
                     model,
@@ -98,8 +110,8 @@ public class OllamaLlmProvider implements LlmProvider {
                     List.of()
             );
         } catch (Exception e) {
-            log.error("Error while calling Ollama LLM", e);
-            return fallbackEnrichment(System.getenv("KGUARD_AI_LLM_MODEL"), "Error calling Ollama: " + e.getMessage());
+            log.error("Error while calling Ollama LLM via /api/chat", e);
+            return fallbackEnrichment(model, "Error calling Ollama: " + e.getMessage());
         }
     }
 
