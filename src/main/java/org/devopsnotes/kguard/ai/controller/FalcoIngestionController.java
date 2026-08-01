@@ -2,10 +2,7 @@ package org.devopsnotes.kguard.ai.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
 import org.devopsnotes.kguard.ai.dto.NormalizedAlertRequest;
@@ -13,6 +10,7 @@ import org.devopsnotes.kguard.ai.dto.AlertRequest;
 import org.devopsnotes.kguard.ai.service.AlertAnalysisService;
 import org.devopsnotes.kguard.ai.service.AlertNormalizationService;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -32,37 +30,81 @@ public class FalcoIngestionController {
         return analysisService.analyze(alert);
     }
 
+    @SuppressWarnings("unchecked")
     private NormalizedAlertRequest buildNormalizedFromFalco(Map<String, Object> falcoPayload) {
-        // Champs de base du JSON Falco
+        // Champs de base
         String source = (String) falcoPayload.getOrDefault("source", "falco");
         String rule = (String) falcoPayload.getOrDefault("rule", "Falco alert");
-        String priority = (String) falcoPayload.getOrDefault("priority", "INFO");
+        String priorityRaw = (String) falcoPayload.getOrDefault("priority", "INFO");
         String output = (String) falcoPayload.getOrDefault("output", "");
-
         String hostname = (String) falcoPayload.getOrDefault("hostname", null);
         String time = (String) falcoPayload.getOrDefault("time", null);
 
-        // Construire l'Event interne
+        // output_fields (Map)
+        Map<String, Object> outputFields = null;
+        Object ofObj = falcoPayload.get("output_fields");
+        if (ofObj instanceof Map) {
+            outputFields = (Map<String, Object>) ofObj;
+        }
+
+        // Extraire workload (pod, container, namespace)
+        String workload = null;
+        if (outputFields != null) {
+            String pod = (String) outputFields.get("k8s.pod.name");
+            String ns = (String) outputFields.get("k8s.ns.name");
+            String container = (String) outputFields.get("container.name");
+
+            if (pod != null && ns != null) {
+                workload = ns + "/" + pod;
+            } else if (container != null) {
+                workload = container;
+            }
+        }
+
+        // Normaliser severity
+        String severity = normalizeFalcoPriority(priorityRaw);
+
+        // Event
         NormalizedAlertRequest.Event event = new NormalizedAlertRequest.Event(
                 rule,          // title
-                priority,      // severity
+                severity,      // severity (INFO/WARNING/ERROR/CRITICAL)
                 output,        // rawLog
-                time,          // eventId (on peut mettre l'horodatage, à affiner)
+                time,          // eventId
                 hostname,      // host
-                null,          // workload (à extraire éventuellement de output_fields)
+                workload,      // workload
                 "falco"        // category
         );
 
-        // Mettre le payload brut dans metadata pour référence
+        // Metadata enrichi
         Map<String, Object> metadata = Map.of(
-                "rawPayload", falcoPayload
+                "rawPayload", falcoPayload,
+                "tags", falcoPayload.getOrDefault("tags", List.of()),
+                "sourceType", falcoPayload.getOrDefault("source", "falco")
         );
 
-        // Retourner un NormalizedAlertRequest complet
         return new NormalizedAlertRequest(
                 source,
                 event,
                 metadata
         );
+    }
+
+    private String normalizeFalcoPriority(String priorityRaw) {
+        if (priorityRaw == null) {
+            return "INFO";
+        }
+        switch (priorityRaw) {
+            case "Emergency":
+            case "Alert":
+            case "Critical":
+            case "Error":
+                return "ERROR";
+            case "Warning":
+                return "WARNING";
+            case "Notice":
+            case "Informational":
+            default:
+                return "INFO";
+        }
     }
 }
