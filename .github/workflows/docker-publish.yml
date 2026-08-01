@@ -50,3 +50,51 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      
+
+      # --- NOUVEAU : mettre à jour le manifeste K8s avec le tag d'image ---
+      - name: Update K8s manifest with new image tag
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          # Tu peux extraire un tag spécifique ici, par exemple le short SHA
+          # Pour l'instant on utilise le premier tag (souvent latest)
+          NEW_TAG=$(echo "$IMAGE_TAG" | head -n1)
+
+          DEPLOY_FILE="infrastructure/apps/k-guard-ai/k8s/deployment.yaml"
+
+          if [ ! -f "$DEPLOY_FILE" ]; then
+            echo "Deployment file not found: $DEPLOY_FILE"
+            exit 0
+          fi
+
+          # Remplacer l'image dans le Deployment
+          sed -i "s|image: ${REGISTRY}/${IMAGE_NAME}:.*|image: ${REGISTRY}/${IMAGE_NAME}:${NEW_TAG}|" "$DEPLOY_FILE"
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add "$DEPLOY_FILE"
+          git diff --cached --quiet || git commit -m "Update K-Guard AI image tag to ${NEW_TAG}"
+          git push
+    
+      - name: Deploy to k3s cluster
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          # Décoder le kubeconfig dans un fichier temporaire
+          echo "$KUBE_CONFIG_B64" | base64 -d > /tmp/kubeconfig
+
+          export KUBECONFIG=/tmp/kubeconfig
+
+          # Vérifier que ça marche
+          kubectl cluster-info
+
+          # Appliquer les manifests K-Guard AI
+          kubectl apply -f infrastructure/apps/k-guard-ai/k8s/deployment.yaml
+          kubectl apply -f infrastructure/apps/k-guard-ai/k8s/service.yaml
+          kubectl apply -f infrastructure/apps/k-guard-ai/k8s/ingress.yaml
+
+          # Forcer un rollout pour utiliser la nouvelle image
+          kubectl rollout restart deploy -n k-guard kguard-ai
+          kubectl rollout status deploy -n k-guard kguard-ai
