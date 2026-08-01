@@ -57,6 +57,18 @@ public class AlertAnalysisService {
                 sanitizedLog
         );
 
+        if (llmEnrichment == null) {
+            log.warn("LLM enrichment is null (service unavailable or disabled). Using empty enrichment.");
+            llmEnrichment = new LlmEnrichment(
+                    null,                              // model
+                    "LLM_UNAVAILABLE",                 // verdict
+                    "LLM service is not available. Basic analysis and actions are provided.", // analystSummary
+                    List.of(),                         // investigationSteps
+                    List.of(),                         // iocs
+                    List.of()                          // hypotheses
+            );
+        }
+
         log.info("LLM enrichment completed: {}", llmEnrichment);
 
         AlertAnalysisResponse response = new AlertAnalysisResponse(
