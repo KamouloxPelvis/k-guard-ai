@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: k-guard-ai
+  namespace: argocd
+  annotations:
+    note: |
+      ArgoCD configuration for maintainers who want automatic upgrades.
+      Regular users do NOT need ArgoCD to install K-Guard AI.
+      See README.md for details.
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/KamouloxPelvis/k-guard-ai.git
+    targetRevision: main
+    path: infrastructure/apps/k-guard-ai/k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: k-guard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
