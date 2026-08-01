@@ -1,14 +1,20 @@
 package org.devopsnotes.kguard.ai.controller;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
 import org.devopsnotes.kguard.ai.dto.NormalizedAlertRequest;
 import org.devopsnotes.kguard.ai.dto.AlertRequest;
 import org.devopsnotes.kguard.ai.service.AlertAnalysisService;
 import org.devopsnotes.kguard.ai.service.AlertNormalizationService;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/falco")
 public class FalcoIngestionController {
@@ -24,6 +30,7 @@ public class FalcoIngestionController {
 
     @PostMapping("/event")
     public AlertAnalysisResponse ingestFalcoEvent(@RequestBody Map<String, Object> falcoPayload) {
+        log.info("Received Falco alert: {}", falcoPayload);
         NormalizedAlertRequest normalized = buildNormalizedFromFalco(falcoPayload);
         AlertRequest alert = normalizationService.normalize(normalized);
         return analysisService.analyze(alert);
