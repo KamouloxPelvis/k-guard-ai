@@ -1,13 +1,19 @@
 package org.devopsnotes.kguard.ai.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.devopsnotes.kguard.ai.dto.AlertRequest;
 import org.devopsnotes.kguard.ai.dto.NormalizedAlertRequest;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AlertNormalizationService {
 
     public AlertRequest normalize(NormalizedAlertRequest request) {
+        log.info("Normalizing alert: source={}, title={}, severity={}, host={}, workload={}",
+                request.source(), request.event().title(), request.event().severity(),
+                request.event().host(), request.event().workload());
+
         String normalizedSource = normalizeSource(request.source());
         String normalizedSeverity = normalizeSeverity(request.event().severity());
 
@@ -30,12 +36,19 @@ public class AlertNormalizationService {
             rawLogBuilder.append(" | eventId=").append(request.event().eventId());
         }
 
-        return new AlertRequest(
+        String rawLog = rawLogBuilder.toString();
+
+        AlertRequest result = new AlertRequest(
                 normalizedSource,
                 request.event().title(),
                 normalizedSeverity,
-                rawLogBuilder.toString()
+                rawLog
         );
+
+        log.info("Normalized alert: source={}, title={}, severity={}, rawLog={}",
+                result.source(), result.title(), result.severity(), result.rawLog());
+
+        return result;
     }
 
     private String normalizeSource(String source) {
