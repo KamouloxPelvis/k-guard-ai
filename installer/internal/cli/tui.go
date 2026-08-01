@@ -174,6 +174,12 @@ func applyResourcesCmd(namespace, esUser, esPass string) tea.Cmd {
 	}
 }
 
+// detectNamespace uses kube.DetectPreferredNamespace to find an existing K-Guard namespace.
+func detectNamespace() string {
+	preferred := kube.DetectPreferredNamespace()
+	return preferred
+}
+
 // Update implements tea.Model.Update.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -208,7 +214,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err := runStatus(); err != nil {
 						m.status = fmt.Sprintf("❌ status failed: %v", err)
 					} else {
-						m.status = "✅ status fetched successfully"
+						m.status = "✅ status fetched successfully (see CLI output above)"
 					}
 
 				case menuInstall:
@@ -250,6 +256,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 				m.namespace = value
+				m.status = "" // reset du message éventuel
 				// next: credentials
 				m.mode = modeInstallCredentialsInput
 				m.inputLabel = "Elasticsearch username"
@@ -280,15 +287,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.status = "value cannot be empty"
 					return m, nil
 				}
+
 				if m.inputField == "username" {
 					m.esUsername = value
+					m.status = "" // reset
 					m.inputLabel = "Elasticsearch password"
 					m.inputField = "password"
 					m.inputValue = ""
 					return m, nil
 				}
+
 				if m.inputField == "password" {
 					m.esPassword = value
+					m.status = "" // reset
 					// next: summary
 					m.mode = modeInstallSummary
 					return m, nil
@@ -346,12 +357,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.installLog = append(m.installLog, msg.msg)
 		m.installError = msg.err
 
-		// Wizard install: progress
 		if m.mode == modeInstallCheck && msg.err == nil {
-			m.mode = modeInstallNamespaceInput
-			m.inputLabel = "Target namespace for K-Guard AI"
-			m.inputField = "namespace"
-			m.inputValue = ""
+			// Nouveau comportement
+			detected := detectNamespace()
+			if detected != "" {
+				m.namespace = detected
+				m.mode = modeInstallCredentialsInput
+				m.inputLabel = "Elasticsearch username"
+				m.inputField = "username"
+				m.inputValue = ""
+			} else {
+				m.mode = modeInstallNamespaceInput
+				m.inputLabel = "Target namespace for K-Guard AI"
+				m.inputField = "namespace"
+				m.inputValue = ""
+			}
 			return m, nil
 		}
 
