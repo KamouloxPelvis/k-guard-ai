@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: https://github.com/KamouloxPelvis/k-guard-ai.git
     targetRevision: main
-    path: infrastructure/apps/k-guard-ai/k8s
+    path: k8s   # <-- corrigé ici
   destination:
     server: https://kubernetes.default.svc
     namespace: k-guard
