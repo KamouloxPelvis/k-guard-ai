@@ -1,5 +1,6 @@
 package org.devopsnotes.kguard.ai.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.devopsnotes.kguard.ai.config.KguardAiProperties;
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
 import org.devopsnotes.kguard.ai.dto.AlertRequest;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class AlertAnalysisService {
 
@@ -32,6 +34,9 @@ public class AlertAnalysisService {
     }
 
     public AlertAnalysisResponse analyze(AlertRequest request) {
+        log.info("Analyzing alert: source={}, title={}, severity={}, rawLog={}",
+                request.source(), request.title(), request.severity(), request.rawLog());
+
         String correlationId = UUID.randomUUID().toString();
         String boundedRawLog = boundRawLog(request.rawLog());
         String sanitizedLog = alertSanitizer.sanitize(boundedRawLog);
@@ -39,6 +44,9 @@ public class AlertAnalysisService {
         String riskLevel = mapRiskLevel(request.severity());
         Double confidenceScore = calculateConfidenceScore(incidentType, sanitizedLog);
         String summary = buildSummary(request.source(), request.title(), incidentType, riskLevel);
+
+        log.info("Incident classified: type={}, riskLevel={}, confidenceScore={}",
+                incidentType, riskLevel, confidenceScore);
 
         LlmEnrichment llmEnrichment = llmProviderRouter.enrich(
                 request.source(),
@@ -48,6 +56,8 @@ public class AlertAnalysisService {
                 riskLevel,
                 sanitizedLog
         );
+
+        log.info("LLM enrichment completed: {}", llmEnrichment);
 
         AlertAnalysisResponse response = new AlertAnalysisResponse(
                 correlationId,
@@ -61,6 +71,9 @@ public class AlertAnalysisService {
                 buildActions(incidentType),
                 llmEnrichment
         );
+
+        log.info("Generated response: correlationId={}, summary={}, actions={}",
+                correlationId, summary, buildActions(incidentType));
 
         elasticsearchAlertExportService.export(response);
         return response;
@@ -121,24 +134,24 @@ public class AlertAnalysisService {
         return switch (incidentType) {
             case "runtime-execution" ->
                     "Interactive shell execution was detected from source " + source +
-                    ". The event \"" + title + "\" suggests potentially dangerous activity inside a container. " +
-                    "The estimated risk level is " + riskLevel + ".";
+                            ". The event \"" + title + "\" suggests potentially dangerous activity inside a container. " +
+                            "The estimated risk level is " + riskLevel + ".";
             case "privilege-escalation" ->
                     "Behavior related to privilege escalation was detected from source " + source +
-                    ". The event \"" + title + "\" requires immediate verification. " +
-                    "The estimated risk level is " + riskLevel + ".";
+                            ". The event \"" + title + "\" requires immediate verification. " +
+                            "The estimated risk level is " + riskLevel + ".";
             case "sensitive-data-exposure" ->
                     "Sensitive content was detected in the log sent by " + source +
-                    ". The event \"" + title + "\" was sanitized before processing. " +
-                    "The estimated risk level is " + riskLevel + ".";
+                            ". The event \"" + title + "\" was sanitized before processing. " +
+                            "The estimated risk level is " + riskLevel + ".";
             case "endpoint-security-event" ->
                     "An endpoint security event related to " + source +
-                    " was identified. The event \"" + title + "\" should be correlated with compliance and inventory data. " +
-                    "The estimated risk level is " + riskLevel + ".";
+                            " was identified. The event \"" + title + "\" should be correlated with compliance and inventory data. " +
+                            "The estimated risk level is " + riskLevel + ".";
             default ->
                     "A security alert from " + source +
-                    " was analyzed. The event \"" + title + "\" requires analyst review. " +
-                    "The estimated risk level is " + riskLevel + ".";
+                            " was analyzed. The event \"" + title + "\" requires analyst review. " +
+                            "The estimated risk level is " + riskLevel + ".";
         };
     }
 
