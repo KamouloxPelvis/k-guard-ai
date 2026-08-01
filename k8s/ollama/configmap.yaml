@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ollama-config
+  namespace: k-guard
+  labels:
+    app: ollama
+data:
+  OLLAMA_MODEL: "qwen3:0.6b"
+  OLLAMA_BASE_URL: "http://ollama-service.k-guard.svc.cluster.local:11434"
