@@ -5,7 +5,10 @@ metadata:
   namespace: k-guard
 data:
   SERVER_PORT: "8080"
-  KGUARD_AI_LLM_ENABLED: "true"
+  KGUARD_AI_BACKEND_ENABLED: "true"
+  KGUARD_AI_BACKEND_URL: "http://k-guard-service.k-guard.svc.cluster.local:8000"
+  KGUARD_AI_BACKEND_EVENTS_PATH: "/api/security/events"
+  KGUARD_AI_LLM_ENABLED: "false"
   KGUARD_AI_LLM_PROVIDER: "ollama"
   KGUARD_AI_LLM_BASE_URL: "http://ollama-service.k-guard.svc.cluster.local:11434"
   KGUARD_AI_LLM_MODEL: "qwen3:0.6b"

@@ -18,18 +18,18 @@ public class AlertAnalysisService {
 
     private final AlertSanitizer alertSanitizer;
     private final LlmProviderRouter llmProviderRouter;
-    private final ElasticsearchAlertExportService elasticsearchAlertExportService;
+    private final KguardBackendForwardingService kguardBackendForwardingService;
     private final KguardAiProperties properties;
 
     public AlertAnalysisService(
             AlertSanitizer alertSanitizer,
             LlmProviderRouter llmProviderRouter,
-            ElasticsearchAlertExportService elasticsearchAlertExportService,
+            KguardBackendForwardingService kguardBackendForwardingService,
             KguardAiProperties properties
     ) {
         this.alertSanitizer = alertSanitizer;
         this.llmProviderRouter = llmProviderRouter;
-        this.elasticsearchAlertExportService = elasticsearchAlertExportService;
+        this.kguardBackendForwardingService = kguardBackendForwardingService;
         this.properties = properties;
     }
 
@@ -87,7 +87,7 @@ public class AlertAnalysisService {
         log.info("Generated response: correlationId={}, summary={}, actions={}",
                 correlationId, summary, buildActions(incidentType));
 
-        elasticsearchAlertExportService.export(response);
+        kguardBackendForwardingService.forward(response);
         return response;
     }
 

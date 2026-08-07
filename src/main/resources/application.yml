@@ -20,8 +20,12 @@ kguard:
     max-raw-log-length: 4000
     default-language: en
     include-sanitized-log-in-response: true
+    backend:
+      enabled: ${KGUARD_AI_BACKEND_ENABLED:false}
+      url: ${KGUARD_AI_BACKEND_URL:http://k-guard-service.k-guard.svc.cluster.local:8000}
+      events-path: ${KGUARD_AI_BACKEND_EVENTS_PATH:/api/security/events}
     llm:
-      enabled: true
+      enabled: false
       provider: ollama
       base-url: http://localhost:11434
       model: qwen3:0.6b
@@ -60,7 +64,7 @@ kguard:
     default-language: en
     include-sanitized-log-in-response: true
     llm:
-      enabled: true
+      enabled: false
       provider: ollama
       base-url: http://localhost:11434
       model: qwen3:0.6b
