@@ -13,6 +13,3 @@ data:
   KGUARD_AI_LLM_BASE_URL: "http://ollama-service.k-guard.svc.cluster.local:11434"
   KGUARD_AI_LLM_MODEL: "qwen3:0.6b"
   KGUARD_AI_LLM_TIMEOUT_SECONDS: "30"
-  KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED: "false"
-  KGUARD_AI_ELASTICSEARCH_URL: "http://elasticsearch.k-guard.svc.cluster.local:9200"
-  KGUARD_AI_ELASTICSEARCH_INDEX: "kguard-ai-alerts"

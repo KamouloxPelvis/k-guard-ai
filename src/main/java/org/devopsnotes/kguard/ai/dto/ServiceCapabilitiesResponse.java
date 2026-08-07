@@ -10,7 +10,6 @@ public record ServiceCapabilitiesResponse(
         boolean includeSanitizedLogInResponse,
         boolean llmEnabled,
         String llmProvider,
-        boolean elasticsearchExportEnabled,
         List<String> supportedSources,
         List<String> supportedProfiles,
         List<String> activeFeatures

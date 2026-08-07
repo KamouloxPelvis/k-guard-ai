@@ -61,7 +61,6 @@ public class AlertNormalizationService {
             case "wazuh" -> "wazuh";
             case "kguard", "k-guard" -> "kguard";
             case "fluent-bit", "fluentbit" -> "fluent-bit";
-            case "elasticsearch", "elastic", "elk" -> "elasticsearch";
             default -> "generic";
         };
     }

@@ -30,10 +30,6 @@ kguard:
       base-url: http://localhost:11434
       model: qwen3:0.6b
       timeout-seconds: 30
-    elasticsearch:
-      export-enabled: false
-      url: http://localhost:9200
-      index: kguard-ai-alerts
 
 management:
   endpoints:
@@ -45,9 +41,6 @@ management:
       show-details: always
       probes:
         enabled: true
-  health:
-    elasticsearch:
-      enabled: false
   info:
     env:
       enabled: true
@@ -69,10 +62,6 @@ kguard:
       base-url: http://localhost:11434
       model: qwen3:0.6b
       timeout-seconds: 30
-    elasticsearch:
-      export-enabled: false
-      url: http://localhost:9200
-      index: kguard-ai-alerts
 
 ---
 spring:
@@ -91,10 +80,6 @@ kguard:
       base-url: ${KGUARD_AI_LLM_BASE_URL:http://127.0.0.1:11434}
       model: ${KGUARD_AI_LLM_MODEL:qwen3:0.6b}
       timeout-seconds: ${KGUARD_AI_LLM_TIMEOUT_SECONDS:30}
-    elasticsearch:
-      export-enabled: ${KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED:false}
-      url: ${KGUARD_AI_ELASTICSEARCH_URL:http://127.0.0.1:9200}
-      index: ${KGUARD_AI_ELASTICSEARCH_INDEX:kguard-ai-alerts}
 
 ---
 spring:
@@ -113,7 +98,3 @@ kguard:
       base-url: ${KGUARD_AI_LLM_BASE_URL:http://ollama:11434}
       model: ${KGUARD_AI_LLM_MODEL:qwen3:0.6b}
       timeout-seconds: ${KGUARD_AI_LLM_TIMEOUT_SECONDS:30}
-    elasticsearch:
-      export-enabled: ${KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED:false}
-      url: ${KGUARD_AI_ELASTICSEARCH_URL:http://elasticsearch:9200}
-      index: ${KGUARD_AI_ELASTICSEARCH_INDEX:kguard-ai-alerts}
