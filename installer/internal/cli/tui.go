@@ -15,7 +15,7 @@ const (
 	modeMenu mode = iota
 	modeInstallCheck
 	modeInstallNamespaceInput
-		modeInstallSummary
+	modeInstallSummary
 	modeInstallApplying
 	modeInstallDone
 	modeCheckCluster
@@ -246,9 +246,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.namespace = value
 				m.status = "" // reset du message éventuel
-				// next: credentials
-				m.mode = 				m.inputLabel = "Elasticsearch username"
-				m.inputField = "username"
+				m.mode = modeInstallSummary
 				m.inputValue = ""
 				return m, nil
 
@@ -263,8 +261,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-		// --- INPUT CREDENTIALS ---
-	case modeInstallSummary:
+			// --- SUMMARY & CONFIRMATION ---
+		case modeInstallSummary:
 			switch msg.String() {
 			case "ctrl+c":
 				return m, tea.Quit
@@ -309,8 +307,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			detected := detectNamespace()
 			if detected != "" {
 				m.namespace = detected
-				m.mode = 				m.inputLabel = "Elasticsearch username"
-				m.inputField = "username"
+				m.mode = modeInstallSummary
 				m.inputValue = ""
 			} else {
 				m.mode = modeInstallNamespaceInput
@@ -347,7 +344,6 @@ func (m model) View() string {
 		return m.viewMenu()
 	case modeInstallCheck,
 		modeInstallNamespaceInput,
-		modeInstallCredentialsInput,
 		modeInstallSummary,
 		modeInstallApplying,
 		modeInstallDone,
