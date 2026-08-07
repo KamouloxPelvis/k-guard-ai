@@ -33,7 +33,6 @@ kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 ```
 
-If Elasticsearch export is enabled, create the Kubernetes Secret from your real credentials before applying the deployment manifest.
 
 ## Notes
 

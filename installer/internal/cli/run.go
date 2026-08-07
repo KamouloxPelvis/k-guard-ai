@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/devopsnotes/k-guard-ai/installer/internal/kube"
-	"golang.org/x/term"
 )
 
 func Run(args []string) error {
@@ -87,16 +86,6 @@ func runInstall(out io.Writer) error {
 		if err := kube.EnsureNamespace(namespace); err != nil {
 			return err
 		}
-	}
-
-	esUsername, esPassword, err := promptElasticsearchCredentials(out)
-	if err != nil {
-		return err
-	}
-
-	fmt.Fprintln(out, "[install] Applying Elasticsearch Secret...")
-	if err := kube.ApplyElasticsearchSecret(namespace, "kguard-ai-secret", esUsername, esPassword); err != nil {
-		return err
 	}
 
 	fmt.Fprintln(out, "[install] Applying ConfigMap...")
@@ -178,31 +167,4 @@ func confirmInstall(namespace string, out io.Writer) bool {
 
 	answer = strings.TrimSpace(strings.ToLower(answer))
 	return answer == "y" || answer == "yes"
-}
-
-func promptElasticsearchCredentials(out io.Writer) (string, string, error) {
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Fprint(out, "Elasticsearch username: ")
-	username, err := reader.ReadString('\n')
-	if err != nil {
-		return "", "", err
-	}
-	username = strings.TrimSpace(username)
-	if username == "" {
-		return "", "", fmt.Errorf("elasticsearch username cannot be empty")
-	}
-
-	fmt.Fprint(out, "Elasticsearch password: ")
-	passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Fprintln(out)
-	if err != nil {
-		return "", "", err
-	}
-	password := strings.TrimSpace(string(passwordBytes))
-	if password == "" {
-		return "", "", fmt.Errorf("elasticsearch password cannot be empty")
-	}
-
-	return username, password, nil
 }

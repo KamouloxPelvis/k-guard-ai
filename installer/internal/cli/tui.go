@@ -15,8 +15,7 @@ const (
 	modeMenu mode = iota
 	modeInstallCheck
 	modeInstallNamespaceInput
-	modeInstallCredentialsInput
-	modeInstallSummary
+		modeInstallSummary
 	modeInstallApplying
 	modeInstallDone
 	modeCheckCluster
@@ -48,8 +47,6 @@ type model struct {
 
 	// install state
 	namespace    string
-	esUsername   string
-	esPassword   string
 	installLog   []string
 	installError error
 
@@ -111,7 +108,7 @@ func checkClusterCmd() tea.Cmd {
 }
 
 // applyResourcesCmd applies K-Guard resources (async).
-func applyResourcesCmd(namespace, esUser, esPass string) tea.Cmd {
+func applyResourcesCmd(namespace string) tea.Cmd {
 	return func() tea.Msg {
 		logs := []string{}
 
@@ -123,14 +120,6 @@ func applyResourcesCmd(namespace, esUser, esPass string) tea.Cmd {
 					err: err,
 					msg: strings.Join(append(logs, "[install] Failed to create namespace"), "\n"),
 				}
-			}
-		}
-
-		logs = append(logs, "[install] Applying Elasticsearch Secret...")
-		if err := kube.ApplyElasticsearchSecret(namespace, "kguard-ai-secret", esUser, esPass); err != nil {
-			return installStepMsg{
-				err: err,
-				msg: strings.Join(append(logs, "[install] Failed to apply secret"), "\n"),
 			}
 		}
 
@@ -258,8 +247,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.namespace = value
 				m.status = "" // reset du message éventuel
 				// next: credentials
-				m.mode = modeInstallCredentialsInput
-				m.inputLabel = "Elasticsearch username"
+				m.mode = 				m.inputLabel = "Elasticsearch username"
 				m.inputField = "username"
 				m.inputValue = ""
 				return m, nil
@@ -276,48 +264,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		// --- INPUT CREDENTIALS ---
-		case modeInstallCredentialsInput:
-			switch msg.String() {
-			case "ctrl+c":
-				return m, tea.Quit
-
-			case "enter":
-				value := strings.TrimSpace(m.inputValue)
-				if value == "" {
-					m.status = "value cannot be empty"
-					return m, nil
-				}
-
-				if m.inputField == "username" {
-					m.esUsername = value
-					m.status = "" // reset
-					m.inputLabel = "Elasticsearch password"
-					m.inputField = "password"
-					m.inputValue = ""
-					return m, nil
-				}
-
-				if m.inputField == "password" {
-					m.esPassword = value
-					m.status = "" // reset
-					// next: summary
-					m.mode = modeInstallSummary
-					return m, nil
-				}
-
-			case "backspace":
-				if len(m.inputValue) > 0 {
-					m.inputValue = m.inputValue[:len(m.inputValue)-1]
-				}
-
-			default:
-				if len(msg.String()) == 1 {
-					m.inputValue += msg.String()
-				}
-			}
-
-		// --- SUMMARY & CONFIRMATION ---
-		case modeInstallSummary:
+	case modeInstallSummary:
 			switch msg.String() {
 			case "ctrl+c":
 				return m, tea.Quit
@@ -325,7 +272,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "y":
 				m.installLog = append(m.installLog, "[install] Proceeding with installation...")
 				m.mode = modeInstallApplying
-				return m, applyResourcesCmd(m.namespace, m.esUsername, m.esPassword)
+				return m, applyResourcesCmd(m.namespace)
 
 			case "n", "q":
 				m.installLog = append(m.installLog, "[install] Installation cancelled by user")
@@ -362,8 +309,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			detected := detectNamespace()
 			if detected != "" {
 				m.namespace = detected
-				m.mode = modeInstallCredentialsInput
-				m.inputLabel = "Elasticsearch username"
+				m.mode = 				m.inputLabel = "Elasticsearch username"
 				m.inputField = "username"
 				m.inputValue = ""
 			} else {
@@ -476,18 +422,8 @@ func (m model) viewInstall() string {
 		step.WriteString("Step 2/6: Target namespace\n\n")
 		step.WriteString(fmt.Sprintf("%s: %s\n\n", m.inputLabel, m.inputValue))
 		step.WriteString("Press Enter to validate.\n")
-
-	case modeInstallCredentialsInput:
-		step.WriteString("Step 3/6: Elasticsearch credentials\n\n")
-		display := m.inputValue
-		if m.inputField == "password" {
-			display = strings.Repeat("*", len(m.inputValue))
-		}
-		step.WriteString(fmt.Sprintf("%s: %s\n\n", m.inputLabel, display))
-		step.WriteString("Press Enter to validate.\n")
-
 	case modeInstallSummary:
-		step.WriteString("Step 4/6: Summary & confirmation\n\n")
+		step.WriteString("Step 3/5: Summary & confirmation\n\n")
 		step.WriteString(fmt.Sprintf("Namespace : %s\n", m.namespace))
 		step.WriteString("Secret    : kguard-ai-secret (will be created or updated)\n")
 		step.WriteString("ConfigMap : kguard-ai-config\n")
@@ -496,11 +432,11 @@ func (m model) viewInstall() string {
 		step.WriteString("Proceed with installation? [y/N]\n")
 
 	case modeInstallApplying:
-		step.WriteString("Step 5/6: Applying manifests & waiting for rollout...\n\n")
+		step.WriteString("Step 4/5: Applying manifests & waiting for rollout...\n\n")
 		step.WriteString("Installation in progress.\n")
 
 	case modeInstallDone:
-		step.WriteString("Step 6/6: Done\n\n")
+		step.WriteString("Step 5/5: Done\n\n")
 		if m.installError != nil {
 			step.WriteString(fmt.Sprintf("❌ Installation finished with error: %v\n\n", m.installError))
 		} else {
