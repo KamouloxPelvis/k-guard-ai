@@ -87,7 +87,7 @@ public class AlertAnalysisService {
         log.info("Generated response: correlationId={}, summary={}, actions={}",
                 correlationId, summary, buildActions(incidentType));
 
-        kguardBackendForwardingService.forward(response);
+        kguardBackendForwardingService.forward(response, request);
         return response;
     }
 

@@ -57,7 +57,7 @@ public class AlertNormalizationService {
         }
 
         return switch (source.trim().toLowerCase()) {
-            case "falco" -> "falco";
+            case "falco", "syscall" -> "falco";
             case "wazuh" -> "wazuh";
             case "kguard", "k-guard" -> "kguard";
             case "fluent-bit", "fluentbit" -> "fluent-bit";

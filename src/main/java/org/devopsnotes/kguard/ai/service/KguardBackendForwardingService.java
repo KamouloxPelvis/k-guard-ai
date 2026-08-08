@@ -3,6 +3,7 @@ package org.devopsnotes.kguard.ai.service;
 import lombok.extern.slf4j.Slf4j;
 import org.devopsnotes.kguard.ai.config.KguardBackendProperties;
 import org.devopsnotes.kguard.ai.dto.AlertAnalysisResponse;
+import org.devopsnotes.kguard.ai.dto.AlertRequest;
 import org.devopsnotes.kguard.ai.dto.LlmEnrichment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -29,7 +30,7 @@ public class KguardBackendForwardingService {
         this.properties = properties;
     }
 
-    public void forward(AlertAnalysisResponse response) {
+    public void forward(AlertAnalysisResponse response, AlertRequest alert) {
         if (!properties.enabled() || response == null) {
             return;
         }
@@ -53,7 +54,7 @@ public class KguardBackendForwardingService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("event_id", response.correlationId());
         payload.put("source", "kguard-ai");
-        payload.put("rule_name", response.incidentType());
+        payload.put("rule_name", alert == null ? response.incidentType() : alert.title());
         payload.put("priority", response.severity());
         payload.put("output", response.humanSummary());
         payload.put("ai_status", isFallback(enrichment) ? "fallback" : "enriched");
