@@ -170,9 +170,11 @@ K-Guard AI is open-source software licensed under the **[Apache License, Version
 
 ## 👤 Author & Contact
 
-**Kamal Guidadou** — *Administrateur Systèmes & Réseaux · Spécialiste DevSecOps & Cloud*
+**Kamal Guidadou** — 
 
-- 🌐 **Portfolio:** [https://devopsnotes.org](https://devopsnotes.org)
+*Administrateur Systèmes & Réseaux · Spécialiste DevSecOps & Cloud*
+*Network & System Administrator · Cloud & DevSecOps Specialist* 
+- 🌐 **Portfolio:** [https://kamal-guidadou.fr](https://kamal-guidadou.fr)
 - 📝 **Blog:** [https://blog.devopsnotes.org](https://blog.devopsnotes.org)
 - 💼 **LinkedIn:** [linkedin.com/in/kamal-guidadou](https://www.linkedin.com/in/kamal-guidadou)
 - 🐙 **GitHub:** [@KamouloxPelvis](https://github.com/KamouloxPelvis)
