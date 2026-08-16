@@ -1,146 +1,178 @@
-# K-Guard AI
+# 🤖 K-Guard AI
 
-K-Guard AI is a Falco alert enrichment microservice built with Spring Boot and Java. It interacts with local LLMs (Ollama) and can export enriched alerts to Elasticsearch.
+**Current release:** `v0.8.0` — Cloud-Native Security Enrichment Microservice & Local LLMOps Engine
 
-This repository contains:
+> An asynchronous threat triage and security-enrichment microservice engineered with Java 21 and Spring Boot 3.5, leveraging local LLMs (Ollama) to normalize, contextualize, and score Falco runtime events for Kubernetes / K3s.
 
-- the K-Guard AI service (Spring Boot, Java 21)
-- Kubernetes manifests (`k8s/`) to deploy it into a k3s/Kubernetes cluster
-- a Go installer (`installer/`) with both TUI and CLI interfaces to automate and standardize installation
-
----
-
-## Prerequisites
-
-- Java 21 for local development (Maven, tests, etc.)
-- Go 1.22+ to build the installer
-- A k3s/Kubernetes cluster accessible via `kubectl` (for in-cluster installation)
-- Optional: a Linux VPS for off-cluster deployment via systemd + Nginx
+[![Release](https://img.shields.io/badge/Release-v0.8.0-orange.svg)](CHANGELOG.md)
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Go](https://img.shields.io/badge/Go%20Installer-1.22+-00ADD8?logo=go&logoColor=white)](installer/)
+[![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-black?logo=ollama&logoColor=white)](https://ollama.com)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-326CE5?logo=kubernetes&logoColor=white)](https://k3s.io)
+[![Docker](https://img.shields.io/badge/Docker-GHCR-2496ED?logo=docker&logoColor=white)](https://ghcr.io)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
 
-## Building the service locally
+### 🔗 Quick Links
+
+- 🚀 **Live Demo:** [https://app.devopsnotes.org](https://app.devopsnotes.org)
+- 🛡️ **K-Guard Main Platform:** [github.com/KamouloxPelvis/k-guard](https://github.com/KamouloxPelvis/k-guard)
+- 🌐 **Author Portfolio:** [https://devopsnotes.org](https://devopsnotes.org)
+- 📖 **Technical Blog:** [https://blog.devopsnotes.org](https://blog.devopsnotes.org)
+
+---
+
+## 🌟 Core Capabilities
+
+| Feature | Description |
+|---|---|
+| **⚡ Automated Threat Triage** | Normalizes complex Falco kernel/eBPF events into concise, actionable natural-language assessments. |
+| **🧠 Zero Data Exfiltration (Local LLM)** | Integrates directly with local **Ollama** models (Mistral / Llama) ensuring all security telemetry stays on-premise. |
+| **🎯 Dynamic Risk & Confidence Scoring** | Generates contextual severity ratings (*Low, Medium, High, Critical*) along with an inference confidence index. |
+| **📦 Hardened Cloud-Native Deployment** | Runs in production on K3s with unprivileged user, read-only root filesystem, dropped Linux capabilities, and `RuntimeDefault` seccomp profile. |
+| **🛠️ Interactive Go Installer (TUI & CLI)** | Ships with a dedicated Go-based setup utility providing both an interactive Terminal UI and scriptable CLI options. |
+| **📊 Optional Elasticsearch Export** | Can stream enriched security alerts to downstream SIEM / Elasticsearch clusters for long-term indexing. |
+
+---
+
+## 📸 In Action: K-Guard AI Investigation Assistant
+
+### 1. Privilege Escalation Analysis (`Risk: Medium` · `Confidence: 85%`)
+The assistant detects suspicious container activity (*"Read sensitive file untrusted"*), synthesizes the potential escalation vector, and recommends immediate analyst verification.
+
+![K-Guard AI Privilege Escalation Analysis](screenshots/kguard-ai-3.png)
+![K-Guard AI Assistant Focus](screenshots/kguard-ai-4.png)
+
+---
+
+### 2. Kubernetes API Server Access Triage (`Risk: Low` · `Confidence: 60%`)
+Anomalous in-cluster API server calls are automatically correlated and triaged with an estimated severity level.
+
+![K-Guard AI API Server Contact](screenshots/kguard-ai-1.png)
+![K-Guard AI Assistant Focus Low](screenshots/kguard-ai-2.png)
+
+---
+
+## 🏗️ Architecture & Pipeline
+
+K-Guard AI operates as an independent backend service within the security ecosystem:
+
+```text
+  ┌─────────────────┐
+  │  Falco (eBPF)   │
+  └────────┬────────┘
+           │ JSON Alert Stream
+           ▼
+  ┌─────────────────┐
+  │   Fluent Bit    │
+  └────────┬────────┘
+           │ HTTP POST (Port 8080)
+           ▼
+  ┌─────────────────────────────────────────┐
+  │             K-Guard AI                  │
+  │    (Java 21 / Spring Boot 3.5)          │
+  │                                         │
+  │  ┌──────────────┐    ┌───────────────┐  │
+  │  │ REST Intake  │───►│ LLM Connector │──┼───► Local Ollama Engine
+  │  └──────────────┘    └───────┬───────┘  │      (Mistral / Llama)
+  │                              │          │
+  │                      Enriched Verdict   │
+  └──────────────────────────────┬──────────┘
+                                 │
+                 ┌───────────────┴───────────────┐
+                 ▼                               ▼
+      ┌─────────────────────┐         ┌─────────────────────┐
+      │   K-Guard Console   │         │ Elasticsearch SIEM  │
+      │  (SOC Investigation)│         │     (Optional)      │
+      └─────────────────────┘         └─────────────────────┘
+```
+
+---
+
+## 🚀 Installation & Deployment
+
+### 1. Local Build (Maven)
 
 ```bash
+# Clone the repository
 git clone https://github.com/KamouloxPelvis/K-Guard-AI.git
 cd K-Guard-AI
 
+# Run tests and build production JAR
 mvn clean test
 mvn clean package
 ```
-
-The JAR is generated in `target/` (for example `target/k-guard-ai-0.8.0.jar`).
+*The packaged artifact is output to `target/k-guard-ai-0.8.0.jar`.*
 
 ---
 
-## Installation in a k3s / Kubernetes cluster (v0.8.0)
+### 2. Automated Installation via Go Installer (TUI / CLI)
 
-### 1. Build the Go installer
+The project includes an installer written in **Go 1.22+**:
 
 ```bash
-cd K-Guard-AI
-
-go -C installer mod tidy
+# Build the Go installer
 go -C installer build -o ./installer/kguard-ai-installer .
-```
 
-### 2. Check cluster connectivity
+# 1. Interactive Terminal UI (TUI)
+./installer/kguard-ai-installer
 
-```bash
-cd installer
-
-./kguard-ai-installer check
-```
-
-This command:
-
-- verifies that `kubectl` is present
-- checks cluster access
-- optionally detects an existing K-Guard namespace
-
-### 3. Install K-Guard AI via TUI
-
-From `installer/`:
-
-```bash
-./kguard-ai-installer
-```
-
-TUI interface:
-
-- use ↑/↓ or j/k to navigate
-- `enter` to trigger an action (`check`, `install`, `status`)
-- `q` or `Ctrl+C` to quit
-
-The installation flow (`Install K-Guard AI`) will:
-
-1. Verify `kubectl` and cluster access
-2. Resolve the namespace:
-   - if an existing K-Guard namespace is detected (e.g. `k-guard`), it will be proposed
-   - otherwise, a namespace is requested in CLI (`Enter target namespace for K-Guard AI:`)
-3. Prompt for Elasticsearch credentials (username + password)
-4. Create or update the Elasticsearch Secret in the target namespace
-5. Apply the manifests:
-   - `k8s/configmap.yaml`
-   - `k8s/deployment.yaml`
-   - `k8s/service.yaml`
-6. Wait for the rollout of the `kguard-ai` Deployment
-
-### 4. CLI mode (scripts, CI/CD)
-
-The same operations can be triggered in CLI mode:
-
-```bash
-cd installer
-
-./kguard-ai-installer check
-./kguard-ai-installer install
-./kguard-ai-installer status
+# 2. Automated CLI Mode (CI/CD)
+./installer/kguard-ai-installer check
+./installer/kguard-ai-installer install --namespace k-guard
+./installer/kguard-ai-installer status
 ```
 
 ---
 
-## Kubernetes manifests (v0.8.0)
+### 3. Kubernetes / K3s Native Manifests
 
-The files in `k8s/` describe:
+All declarative manifests are located in [`k8s/`](k8s/):
 
-- `k8s/deployment.yaml`: K-Guard AI deployment (`Deployment kguard-ai`)
-- `k8s/service.yaml`: internal service (`Service kguard-ai`, port 8080)
-- `k8s/configmap.yaml`: LLM and export configuration
-- `k8s/secret.example.yaml`: example Secret for Elasticsearch credentials
+```bash
+# Apply ConfigMap, Deployment and Service
+kubectl apply -f k8s/configmap.yaml -n k-guard
+kubectl apply -f k8s/deployment.yaml -n k-guard
+kubectl apply -f k8s/service.yaml -n k-guard
 
-By default, the ConfigMap:
-
-- enables LLM enrichment
-- disables Elasticsearch export (`KGUARD_AI_ELASTICSEARCH_EXPORT_ENABLED: "false"`)
-
-You can enable export by setting this value to `"true"` once your credentials and Elasticsearch URL are correctly configured.
+# Verify rollout status
+kubectl rollout status deployment/kguard-ai -n k-guard
+```
 
 ---
 
-## Off-cluster deployment (VPS + systemd + Nginx)
+### 4. Standalone Host Deployment (Systemd + Nginx)
 
-As an alternative to in-cluster deployment, K-Guard AI can be deployed on a Linux VPS:
-
-1. Copy the generated JAR (`target/k-guard-ai-0.8.0.jar`) to the VPS (`/opt/kguard-ai/app.jar`)
-2. Create a systemd service (`/etc/systemd/system/kguard-ai.service`) to run the JAR with Java 21
-3. Install Nginx and configure a reverse proxy:
-   - expose the K-Guard AI HTTP API (port 8080)
-   - handle TLS/HTTPS via certbot if needed
-4. Configure Falco (or K-Guard) to call the K-Guard AI enrichment API on the VPS
-
-This approach is useful to demonstrate a complete DevOps flow:  
-Maven build → systemd service → Nginx reverse proxy → enrichment API accessible from the cluster or external agents.
+For hybrid or off-cluster environments:
+1. Copy the JAR to `/opt/kguard-ai/app.jar`.
+2. Configure a `systemd` service (`/etc/systemd/system/kguard-ai.service`) running Java 21.
+3. Place Nginx in front as an HTTPS reverse-proxy terminating TLS.
 
 ---
 
-## Security and hardening
+## 🔒 Security & Hardening Model
 
-K-Guard AI v0.8.0 includes:
+- **Non-Root Execution:** The container runs under an unprivileged UID (`runAsNonRoot: true`).
+- **Immutable Filesystem:** Read-only root filesystem with ephemeral memory storage for `/tmp`.
+- **Capability Dropping:** All Linux kernel capabilities are explicitly dropped (`drop: ["ALL"]`).
+- **Seccomp Protection:** Enforces `RuntimeDefault` seccomp profile to restrict unauthorized system calls.
+- **Actuator Healthchecks:** Exposes dedicated `/actuator/health`, `/actuator/info` and Prometheus telemetry endpoints.
 
-- a hardened Kubernetes deployment (`runAsNonRoot`, `readOnlyRootFilesystem`, `drop ALL capabilities`, `seccompProfile RuntimeDefault`)
-- controlled LLM configuration (timeouts, model, base URL)
-- optional integration with Elasticsearch (via Secret and ConfigMap)
+---
 
-These choices are documented in `CHANGELOG.md` and `SECURITY.md`.
+## 📄 License
 
+K-Guard AI is open-source software licensed under the **[Apache License, Version 2.0](LICENSE)**.
+
+---
+
+## 👤 Author & Contact
+
+**Kamal Guidadou** — *Administrateur Systèmes & Réseaux · Spécialiste DevSecOps & Cloud*
+
+- 🌐 **Portfolio:** [https://devopsnotes.org](https://devopsnotes.org)
+- 📝 **Blog:** [https://blog.devopsnotes.org](https://blog.devopsnotes.org)
+- 💼 **LinkedIn:** [linkedin.com/in/kamal-guidadou](https://www.linkedin.com/in/kamal-guidadou)
+- 🐙 **GitHub:** [@KamouloxPelvis](https://github.com/KamouloxPelvis)
