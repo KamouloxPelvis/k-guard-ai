@@ -21,6 +21,7 @@
 - 🛡️ **K-Guard Main Platform:** [github.com/KamouloxPelvis/k-guard](https://github.com/KamouloxPelvis/k-guard)
 - 🌐 **Author Portfolio:** [https://devopsnotes.org](https://devopsnotes.org)
 - 📖 **Technical Blog:** [https://blog.devopsnotes.org](https://blog.devopsnotes.org)
+- 📑 **Architecture Dossier (PDF):** [Dossier d'Architecture Technique v0.8.0](https://devopsnotes.org/docs/Dossier_de_conception_technique_K-Guard_AI_v0.8.0.pdf)
 
 ---
 
